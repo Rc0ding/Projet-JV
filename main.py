@@ -8,3 +8,5 @@ if __name__ == "__main__":
 
 def remi():
     print("remi est le goat")
+
+print("on va manger ce projet")
