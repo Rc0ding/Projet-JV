@@ -21,7 +21,13 @@ class GameView(arcade.View):
           
         wall_list: arcade.SpriteList[arcade.Sprite]
         
+        
         wall_list=arcade.SpriteList(use_spatial_hash=True)
+
+        coin_list:arcade.SpriteList[arcade.Sprite]
+        
+        coin_list=arcade.SpriteList(use_spatial_hash=True)
+
         
         camera: arcade.camera.Camera2D
         
@@ -43,6 +49,9 @@ class GameView(arcade.View):
                 
                 for i in range(1,4):
                         self.wall_list.append(arcade.Sprite(":resources:images/tiles/boxCrate_double.png",0.5,256*i,96))
+                
+                self.coin_list.append(arcade.Sprite(r"C:\Users\remis\OneDrive\Desktop\POO PROJET\ressources\noahlan.png",0.55,350,100))
+                self.coin_list.append(arcade.Sprite(r"C:\Users\remis\OneDrive\Desktop\POO PROJET\ressources\noahlan.png",0.55,512,164))
                 
                 self.physics_engine = arcade.PhysicsEnginePlatformer(self.player_sprite,self.wall_list,0.5)
                 self.camera= arcade.camera.Camera2D()
@@ -87,6 +96,15 @@ class GameView(arcade.View):
                 """
         
                 self.camera.position=[self.player_sprite.position[0],360] # type: ignore
+                
+                coins:list[arcade.Sprite]
+                        
+                coins=arcade.check_for_collision_with_list(self.player_sprite,self.coin_list)
+                
+                if len(coins)!=0:
+                        for coin in coins:
+                                coin.remove_from_sprite_lists()
+                
                 self.physics_engine.update()
                 
         def on_draw(self) -> None:
@@ -96,3 +114,4 @@ class GameView(arcade.View):
                 with self.camera.activate():
                         arcade.draw_sprite(self.player_sprite)
                         self.wall_list.draw()
+                        self.coin_list.draw()

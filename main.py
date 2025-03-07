@@ -1,5 +1,6 @@
 import arcade
 from gameview import GameView
+from conftest import test_collect_coins
 # Constants
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -10,9 +11,11 @@ def main() -> None:
 
 	# Create the (unique) Window, setup our GameView, and launch
 	window = arcade.Window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
+
 	game_view = GameView()
 	window.show_view(game_view)
 	arcade.run()
+ 
 
 if __name__ == "__main__":
 	main()
