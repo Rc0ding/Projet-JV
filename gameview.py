@@ -50,8 +50,8 @@ class GameView(arcade.View):
                 for i in range(1,4):
                         self.wall_list.append(arcade.Sprite(":resources:images/tiles/boxCrate_double.png",0.5,256*i,96))
                 
-                self.coin_list.append(arcade.Sprite(r"C:\Users\remis\OneDrive\Desktop\POO PROJET\ressources\noahlan.png",0.55,350,100))
-                self.coin_list.append(arcade.Sprite(r"C:\Users\remis\OneDrive\Desktop\POO PROJET\ressources\noahlan.png",0.55,512,164))
+                self.coin_list.append(arcade.Sprite(r".\ressources\noahlan.png",0.55,350,100))
+                self.coin_list.append(arcade.Sprite(r".\ressources\noahlan.png",0.55,512,164))
                 
                 self.physics_engine = arcade.PhysicsEnginePlatformer(self.player_sprite,self.wall_list,0.5)
                 self.camera= arcade.camera.Camera2D()
