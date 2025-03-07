@@ -9,3 +9,9 @@ dependencies = [
 ]
 [tool.mypy]
 strict = true
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "pytest>=8.3.5",
+]
