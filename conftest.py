@@ -1,3 +1,4 @@
+
 import arcade
 from arcade import gl
 import pytest
@@ -98,3 +99,5 @@ def test_collect_coins(window: arcade.Window) -> None:
 
     # We should have collected the second coin
     assert len(view.coin_list) == INITIAL_COIN_COUNT - 2
+    
+ 

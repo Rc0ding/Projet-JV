@@ -1,4 +1,5 @@
 import arcade
+import time
 
 class GameView(arcade.View):
         """Main in-game view."""
@@ -33,14 +34,15 @@ class GameView(arcade.View):
         
         PLAYER_MOVEMENT_SPEED:int=5
         
-        
+        #":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"
 
         def setup(self)-> None:
                 """Set up the game here."""
                 self.player_sprite = arcade.Sprite(
-                ":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png",
+                r".\ressources\perso.png",
                 center_x=64,
-                center_y=128
+                center_y=128,
+                scale=0.1
                 )
                 
                 for i in range(21):
@@ -104,12 +106,27 @@ class GameView(arcade.View):
                 if len(coins)!=0:
                         for coin in coins:
                                 coin.remove_from_sprite_lists()
+                                
+                
+                x=self.player_sprite.center_x
+                y=self.player_sprite.center_y
+                if self.player_sprite.change_x>0:
+                        self.player_sprite=arcade.Sprite(r"ressources/percours2.PNG",scale=0.1,center_x=x,center_y=y)
+                
+                elif self.player_sprite.change_x<0:
+                        self.player_sprite=arcade.Sprite(r"ressources/percours.PNG",scale=0.1,center_x=x,center_y=y)
+                        
+                else:
+                        self.player_sprite=arcade.Sprite(r"ressources/perso.PNG",scale=0.1,center_x=x,center_y=y)
+                
+                                
                 
                 self.physics_engine.update()
                 
         def on_draw(self) -> None:
                 """Render the screen."""
                 self.clear() # always start with self.clear()
+                        
                 
                 with self.camera.activate():
                         arcade.draw_sprite(self.player_sprite)
