@@ -108,16 +108,6 @@ class GameView(arcade.View):
                                 coin.remove_from_sprite_lists()
                                 
                 
-                x=self.player_sprite.center_x
-                y=self.player_sprite.center_y
-                if self.player_sprite.change_x>0:
-                        self.player_sprite=arcade.Sprite(r"ressources/percours2.PNG",scale=0.1,center_x=x,center_y=y)
-                
-                elif self.player_sprite.change_x<0:
-                        self.player_sprite=arcade.Sprite(r"ressources/percours.PNG",scale=0.1,center_x=x,center_y=y)
-                        
-                else:
-                        self.player_sprite=arcade.Sprite(r"ressources/perso.PNG",scale=0.1,center_x=x,center_y=y)
                 
                                 
                 
