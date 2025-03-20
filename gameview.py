@@ -19,9 +19,9 @@ class GameView(arcade.View):
 
         physics_engine: arcade.PhysicsEnginePlatformer
         player_sprite: arcade.Sprite
-          
-        wall_list: arcade.SpriteList[arcade.Sprite]
         
+        ### LISTE DES OBJETS
+        wall_list: arcade.SpriteList[arcade.Sprite]
         
         wall_list=arcade.SpriteList(use_spatial_hash=True)
 
@@ -29,11 +29,18 @@ class GameView(arcade.View):
         
         coin_list=arcade.SpriteList(use_spatial_hash=True)
 
+        lava_list:arcade.SpriteList[arcade.Sprite]
+        
+        lava_list=arcade.SpriteList(use_spatial_hash=True)
         
         camera: arcade.camera.Camera2D
         
-        PLAYER_MOVEMENT_SPEED:int=5
+        PLAYER_MOVEMENT_SPEED:int=10
         
+        gameoversound = arcade.load_sound(r".\ressources\gameover.mp3")
+
+
+
         #":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"
 
         def setup(self)-> None:
@@ -42,12 +49,16 @@ class GameView(arcade.View):
                 r".\ressources\perso.png",
                 center_x=64,
                 center_y=128,
-                scale=0.1
+                scale=0.075
                 )
                 
                 for i in range(21):
                         grass=arcade.Sprite(":resources:images/tiles/grassMid.png", 0.5, 64*i,32)
                         self.wall_list.append(grass)
+                
+                lava=arcade.Sprite(":resources:/images/tiles/lava.png", 0.5,1344,32)
+                self.lava_list.append(lava)
+                
                 
                 for i in range(1,4):
                         self.wall_list.append(arcade.Sprite(":resources:images/tiles/boxCrate_double.png",0.5,256*i,96))
@@ -96,6 +107,7 @@ class GameView(arcade.View):
 
                 This is where in-world time "advances", or "ticks".
                 """
+                
         
                 self.camera.position=[self.player_sprite.position[0],360] # type: ignore
                 
@@ -103,17 +115,33 @@ class GameView(arcade.View):
                         
                 coins=arcade.check_for_collision_with_list(self.player_sprite,self.coin_list)
                 
+                lava=arcade.check_for_collision_with_list(self.player_sprite,self.lava_list)
+                
+                if len(lava)!=0:
+                        self.gameover()
+                
                 if len(coins)!=0:
                         for coin in coins:
                                 coin.remove_from_sprite_lists()
-                                
+                
+                self.physics_engine.update()              
                 
                 
-                                
-                
-                self.physics_engine.update()
+        def gameover(self) -> None:
+                cx=self.player_sprite.center_x
+                cy=self.player_sprite.center_y
+                self.player_sprite = arcade.Sprite(r".\ressources\persofeu.PNG",scale=0.075,center_x=cx,center_y=cy)
+                time.sleep(0.5)       
+                print(self.player_sprite.texture.file_path)
+                arcade.play_sound(self.gameoversound)
+                time.sleep(2.14)
+                self.player_sprite.change_x=0
+                self.player_sprite.change_y=0
+                self.player_sprite = arcade.Sprite(r".\ressources\perso.png",scale=0.075,center_x=cx,center_y=cy)
+                self.setup()
                 
         def on_draw(self) -> None:
+                
                 """Render the screen."""
                 self.clear() # always start with self.clear()
                         
@@ -122,3 +150,4 @@ class GameView(arcade.View):
                         arcade.draw_sprite(self.player_sprite)
                         self.wall_list.draw()
                         self.coin_list.draw()
+                        self.lava_list.draw()
