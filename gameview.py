@@ -1,124 +1,114 @@
 import arcade
 import time
+from typing import Dict, List, Optional
+from mapgen import Map
+
 
 class GameView(arcade.View):
-        """Main in-game view."""
+    """Main in-game view."""
 
+    # Class-level constant for movement speed.
+    PLAYER_MOVEMENT_SPEED: int = 5
+
+    def __init__(self) -> None:
+        # Magical incantation: initialize the Arcade view
+        super().__init__()
+
+        # Choose a nice comfy background color
+        self.background_color = arcade.csscolor.CORNFLOWER_BLUE
+
+        self.map_name: str = "map1.txt"
+
+        # Initialize attributes with dummy defaults so mypy knows they exist.
+        self.map: Map
+        self.wall_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
+        self.coin_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
+        self.monster_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
+        self.death_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
+        self.exit_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
+        self.player_sprite_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
+        self.player_sprite: arcade.Sprite = arcade.Sprite()
+        self.initial_x: float = 0.0
+        self.initial_y: float = 0.0
+        self.physics_engine: Optional[arcade.PhysicsEnginePlatformer] = None
+        self.camera: arcade.Camera2D = arcade.camera.Camera2D()
+
+        # Setup our game
+        self.setup(self.map_name)
+
+    def setup(self, map_filename: str) -> None:
+        self.map = Map()
+        self.map.import_map(map_filename)
+        new_map: Dict[str, arcade.SpriteList[arcade.Sprite]] = self.map.build_level()
+
+        # Use keys as defined in Map.build_level()
+        self.wall_list = new_map["walls"]
+        self.coin_list = new_map["coins"]
+        self.monster_list = new_map["monsters"]
+        self.death_list = new_map["death"]
+        self.exit_list = new_map["exit"]
+        self.player_sprite_list = new_map["player"]
+
+        # Assume there is at least one player sprite.
+        self.player_sprite = self.player_sprite_list[0]
+        self.initial_x = self.player_sprite.center_x
+        self.initial_y = self.player_sprite.center_y
+
+        self.physics_engine = arcade.PhysicsEnginePlatformer(
+            self.player_sprite, self.wall_list, gravity_constant=0.5
+        )
+        self.camera = arcade.camera.Camera2D()
+
+    def on_key_press(self, key: int, modifiers: int) -> None:
+        """Called when the user presses a key on the keyboard."""
+        match key:
+            case arcade.key.RIGHT:
+                # start moving to the right
+                self.player_sprite.change_x = +self.PLAYER_MOVEMENT_SPEED
+            case arcade.key.LEFT:
+                # start moving to the left
+                self.player_sprite.change_x = -self.PLAYER_MOVEMENT_SPEED
+            case arcade.key.UP:
+                # Petit problème: saut infini - only allow jump if not already moving vertically.
+                if self.player_sprite.change_y == 0:
+                    self.player_sprite.change_y = +14
+            case arcade.key.SPACE:
+                # Reset the game by stopping movement and re-running setup.
+                self.player_sprite.change_x = 0
+                self.player_sprite.change_y = 0
+                self.setup(self.map_name)
+
+    def on_key_release(self, key: int, modifiers: int) -> None:
+        """Called when the user releases a key on the keyboard."""
+        match key:
+            case arcade.key.RIGHT | arcade.key.LEFT:
+                # stop lateral movement
+                self.player_sprite.change_x = 0
+
+    def on_update(self, delta_time: float) -> None:
+        """Called once per frame, before drawing.
         
-        def __init__(self) -> None:
-                # Magical incantion: initialize the Arcade view
-                super().__init__()
+        This is where in-world time "advances", or "ticks".
+        """
+        # Update the camera's position (adjust type if needed).
+        self.camera.position = [self.player_sprite.center_x, 360]  # type: ignore
 
-                # Choose a nice comfy background color
-                self.background_color = arcade.csscolor.CORNFLOWER_BLUE
+        coins: List[arcade.Sprite] = arcade.check_for_collision_with_list(
+            self.player_sprite, self.coin_list
+        )
+        if coins:
+            for coin in coins:
+                coin.remove_from_sprite_lists()
 
-                # Setup our game
-                self.setup()
-                
+        # Update the physics engine if it's initialized.
+        if self.physics_engine is not None:
+            self.physics_engine.update()
 
+    def on_draw(self) -> None:
+        """Render the screen."""
+        self.clear()  # always start with self.clear()
 
-        physics_engine: arcade.PhysicsEnginePlatformer
-        player_sprite: arcade.Sprite
-          
-        wall_list: arcade.SpriteList[arcade.Sprite]
-        
-        
-        wall_list=arcade.SpriteList(use_spatial_hash=True)
-
-        coin_list:arcade.SpriteList[arcade.Sprite]
-        
-        coin_list=arcade.SpriteList(use_spatial_hash=True)
-
-        
-        camera: arcade.camera.Camera2D
-        
-        PLAYER_MOVEMENT_SPEED:int=5
-        
-        #":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"
-
-        def setup(self)-> None:
-                """Set up the game here."""
-                self.player_sprite = arcade.Sprite(
-                r".\ressources\perso.png",
-                center_x=64,
-                center_y=128,
-                scale=0.1
-                )
-                
-                for i in range(21):
-                        grass=arcade.Sprite(":resources:images/tiles/grassMid.png", 0.5, 64*i,32)
-                        self.wall_list.append(grass)
-                
-                for i in range(1,4):
-                        self.wall_list.append(arcade.Sprite(":resources:images/tiles/boxCrate_double.png",0.5,256*i,96))
-                
-                self.coin_list.append(arcade.Sprite(r".\ressources\noahlan.png",0.55,350,100))
-                self.coin_list.append(arcade.Sprite(r".\ressources\noahlan.png",0.55,512,164))
-                
-                self.physics_engine = arcade.PhysicsEnginePlatformer(self.player_sprite,self.wall_list,0.5)
-                self.camera= arcade.camera.Camera2D()
-                
-        
-
-
-        
-        def on_key_press(self, key: int, modifiers: int) -> None:
-                """Called when the user presses a key on the keyboard."""
-                match key:
-                        case arcade.key.RIGHT:
-                                # start moving to the right
-                                self.player_sprite.change_x = +self.PLAYER_MOVEMENT_SPEED
-                        case arcade.key.LEFT:
-                                # start moving to the left
-                                self.player_sprite.change_x = -self.PLAYER_MOVEMENT_SPEED
-                        case arcade.key.UP:
-                                #petit probleme saut infini
-                                if self.player_sprite.change_y==0:
-                                        self.player_sprite.change_y= +10
-                        
-                        #remets le jeu à zero        
-                        case arcade.key.SPACE:
-                                self.player_sprite.change_x=0
-                                self.player_sprite.change_y=0
-                                self.setup()
-
-
-
-        def on_key_release(self, key: int, modifiers: int) -> None:
-                """Called when the user releases a key on the keyboard."""
-                match key:
-                        case arcade.key.RIGHT | arcade.key.LEFT:
-                                # stop lateral movement
-                                self.player_sprite.change_x = 0
-                                
-        def on_update(self, delta_time: float) -> None:
-                """Called once per frame, before drawing.
-
-                This is where in-world time "advances", or "ticks".
-                """
-        
-                self.camera.position=[self.player_sprite.position[0],360] # type: ignore
-                
-                coins:list[arcade.Sprite]
-                        
-                coins=arcade.check_for_collision_with_list(self.player_sprite,self.coin_list)
-                
-                if len(coins)!=0:
-                        for coin in coins:
-                                coin.remove_from_sprite_lists()
-                                
-                
-                
-                                
-                
-                self.physics_engine.update()
-                
-        def on_draw(self) -> None:
-                """Render the screen."""
-                self.clear() # always start with self.clear()
-                        
-                
-                with self.camera.activate():
-                        arcade.draw_sprite(self.player_sprite)
-                        self.wall_list.draw()
-                        self.coin_list.draw()
+        with self.camera.activate():
+            arcade.draw_sprite(self.player_sprite)
+            self.wall_list.draw()
+            self.coin_list.draw()
