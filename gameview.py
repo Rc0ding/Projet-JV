@@ -33,24 +33,38 @@ class GameView(arcade.View):
         
         lava_list=arcade.SpriteList(use_spatial_hash=True)
         
+        
+        #blob
+        blob_list: arcade.SpriteList[arcade.Sprite]
+        
+        blob_list =arcade.SpriteList()
+        
+        
         camera: arcade.camera.Camera2D
         
         PLAYER_MOVEMENT_SPEED:int=10
         
-        gameoversound = arcade.load_sound(r".\ressources\gameover.mp3")
-
-
+        gameoversound = arcade.load_sound(r".\ressources\gameover2.mp3")
 
         #":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"
 
         def setup(self)-> None:
                 """Set up the game here."""
+        
+                perso=arcade.load_texture(r".\ressources\perso.PNG")
+                persofeu= arcade.load_texture(r".\ressources\persofeu.PNG")
+        
+
                 self.player_sprite = arcade.Sprite(
-                r".\ressources\perso.png",
                 center_x=64,
                 center_y=128,
                 scale=0.075
                 )
+                self.player_sprite.textures.append(perso)
+                self.player_sprite.textures.append(persofeu)
+                self.player_sprite.set_texture(0)
+                
+
                 
                 for i in range(21):
                         grass=arcade.Sprite(":resources:images/tiles/grassMid.png", 0.5, 64*i,32)
@@ -65,6 +79,8 @@ class GameView(arcade.View):
                 
                 self.coin_list.append(arcade.Sprite(r".\ressources\noahlan.png",0.55,350,100))
                 self.coin_list.append(arcade.Sprite(r".\ressources\noahlan.png",0.55,512,164))
+                
+                self.blob_create(400,115)
                 
                 self.physics_engine = arcade.PhysicsEnginePlatformer(self.player_sprite,self.wall_list,0.5)
                 self.camera= arcade.camera.Camera2D()
@@ -117,6 +133,10 @@ class GameView(arcade.View):
                 
                 lava=arcade.check_for_collision_with_list(self.player_sprite,self.lava_list)
                 
+                
+                for blob in self.blob_list:
+                        self.blob_update(blob)   
+                                    
                 if len(lava)!=0:
                         self.gameover()
                 
@@ -128,18 +148,24 @@ class GameView(arcade.View):
                 
                 
         def gameover(self) -> None:
-                cx=self.player_sprite.center_x
-                cy=self.player_sprite.center_y
-                self.player_sprite = arcade.Sprite(r".\ressources\persofeu.PNG",scale=0.075,center_x=cx,center_y=cy)
-                time.sleep(0.5)       
-                print(self.player_sprite.texture.file_path)
-                arcade.play_sound(self.gameoversound)
-                time.sleep(2.14)
-                self.player_sprite.change_x=0
-                self.player_sprite.change_y=0
-                self.player_sprite = arcade.Sprite(r".\ressources\perso.png",scale=0.075,center_x=cx,center_y=cy)
-                self.setup()
                 
+                self.player_sprite.set_texture(1)
+                arcade.play_sound(self.gameoversound)
+        
+        
+        def blob_create(self, positionx:int, positiony:int) -> None:
+                blob = arcade.Sprite(":resources:/images/enemies/slimeBlue.png", scale=0.85, center_x=positionx, center_y=positiony)
+                blob.change_x = 5
+                self.blob_list.append(blob)
+                
+        def blob_update(self, blob:arcade.Sprite)-> None:
+                blob.center_x+=blob.change_x                
+                
+                future_blob=arcade.Sprite(path_or_texture=":resources:/images/enemies/slimeBlue.png", center_x= blob.center_x,center_y= blob.center_y,scale=0.35)
+                if not(arcade.check_for_collision_with_list(future_blob,self.wall_list)):
+                        blob.change_x=-blob.change_x
+                
+              
         def on_draw(self) -> None:
                 
                 """Render the screen."""
@@ -151,3 +177,4 @@ class GameView(arcade.View):
                         self.wall_list.draw()
                         self.coin_list.draw()
                         self.lava_list.draw()
+                        self.blob_list.draw()
