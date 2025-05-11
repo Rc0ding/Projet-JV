@@ -1,5 +1,7 @@
 import arcade
 from typing import List, Dict, Any
+import entities
+
 
 class Map:
     def __init__(self) -> None:
@@ -54,7 +56,7 @@ class Map:
         for row_index, line in enumerate(grid_lines):
             # Note: Using list(line) will include newline characters.
             self.grid.append(list(line))
-
+            
     def build_level(self) -> Dict[str, arcade.SpriteList[arcade.Sprite]]:
         """
         Builds the level assuming your map file lists rows from top to bottom.
@@ -62,10 +64,11 @@ class Map:
         """
         wall_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
         coin_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
-        monster_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
         death_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
         exit_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
         player_sprite_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
+        monster_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
+
 
         # We'll just fix the tile size & scale for demonstration:
         tile_size: int = 64
@@ -76,16 +79,17 @@ class Map:
             '-': {"texture": ":resources:images/tiles/grassHalf_mid.png", "list": wall_list},
             'x': {"texture": ":resources:images/tiles/boxCrate_double.png", "list": wall_list},
             '*': {"texture": ":resources:images/items/coinGold.png", "list": coin_list},
-            # 'o': {"texture": ":resources:images/enemies/slimeBlue.png", "list": monster_list},
             '£': {"texture": ":resources:images/tiles/lava.png", "list": death_list}
+            
         }
 
         # Reverse self.grid so the top line in the file is row_index=0 (top in the game).
         reversed_grid: List[List[str]] = list(reversed(self.grid))
-
+        last_ground_tiles: Dict[int, arcade.Sprite] = {}
+        boundary_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
+        
         for row_index, row in enumerate(reversed_grid):
             for col_index, symbol in enumerate(row):
-                # row_index=0 is the top row now, so row_index increases downward
                 x: float = col_index * tile_size + tile_size / 2
                 y: float = row_index * tile_size + tile_size / 2
 
@@ -104,14 +108,39 @@ class Map:
                     exit_sprite.center_x = x
                     exit_sprite.center_y = y
                     exit_list.append(exit_sprite)
+                
+                elif symbol == 'o':                          # vrai Blob
+                    enemy1: entities.Enemy = entities.Blob((x, y),
+                                        speed=1)
+                    monster_list.append(enemy1)
+                    continue                                 # on passe à la prochaine case
+
+                elif symbol == 'b':                          # (optionnel) Bat
+                    enemy2: entities.Enemy = entities.Bat((x, y + 128))
+                    monster_list.append(enemy2)
+                    continue
+
 
                 elif symbol in texture_mapping:
-                    sprite_info: Dict[str, Any] = texture_mapping[symbol]
+                    sprite_info = texture_mapping[symbol]
                     texture_path: str = sprite_info["texture"]
                     sprite = arcade.Sprite(texture_path, scale=scale_factor)
                     sprite.center_x = x
                     sprite.center_y = y
                     sprite_info["list"].append(sprite)
+
+                    # Add crates ('x') to the boundary list
+                    if symbol == 'x':
+                        boundary_list.append(sprite)
+
+                    # Track the last ground tile in each column
+                    if symbol in ('-', 'x', '='):  # Include '=' as a ground tile
+                        last_ground_tiles[col_index] = sprite
+
+        # Add the last ground tiles to the boundary list
+        for sprite in last_ground_tiles.values():
+            if sprite not in boundary_list:          # avoid duplicates
+                boundary_list.append(sprite)
 
         if len(player_sprite_list) == 0:
             raise ValueError("No player sprite found in the map (missing 'S' symbol)!")
@@ -123,4 +152,4 @@ class Map:
             "death": death_list,
             "player": player_sprite_list,
             "exit": exit_list
-        }
+        }   

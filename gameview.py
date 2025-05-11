@@ -17,7 +17,7 @@ class GameView(arcade.View):
         # Choose a nice comfy background color
         self.background_color = arcade.csscolor.CORNFLOWER_BLUE
 
-        self.map_name: str = "map1.txt"
+        self.map_name: str = f"maps/map1.txt"
 
         # Initialize attributes with dummy defaults so mypy knows they exist.
         self.map: Map
@@ -33,6 +33,9 @@ class GameView(arcade.View):
         self.physics_engine: Optional[arcade.PhysicsEnginePlatformer] = None
         self.camera: arcade.Camera2D = arcade.camera.Camera2D()
 
+        # Load the game over sound
+        self.game_over_sound: arcade.Sound = arcade.load_sound(":resources:sounds/gameover1.wav")
+
         # Setup our game
         self.setup(self.map_name)
 
@@ -45,6 +48,8 @@ class GameView(arcade.View):
         self.wall_list = new_map["walls"]
         self.coin_list = new_map["coins"]
         self.monster_list = new_map["monsters"]
+        for monster in self.monster_list:
+            monster.change_x = 1  # Initialize horizontal movement
         self.death_list = new_map["death"]
         self.exit_list = new_map["exit"]
         self.player_sprite_list = new_map["player"]
@@ -99,11 +104,26 @@ class GameView(arcade.View):
         if coins:
             for coin in coins:
                 coin.remove_from_sprite_lists()
+        
+        if arcade.check_for_collision_with_list(self.player_sprite, self.death_list):
+            arcade.play_sound(self.game_over_sound)
+            self.setup(self.map_name)         # simple “restart level”
+            return
 
         # Update the physics engine if it's initialized.
+    
         if self.physics_engine is not None:
             self.physics_engine.update()
 
+        for monster in self.monster_list:
+            monster.update(delta_time, self.wall_list)        # animate AI
+            if arcade.check_for_collision(self.player_sprite, monster):
+                arcade.play_sound(self.game_over_sound)
+                self.setup(self.map_name)                     # simple “restart”
+                return
+
+            
+            
     def on_draw(self) -> None:
         """Render the screen."""
         self.clear()  # always start with self.clear()
@@ -112,3 +132,6 @@ class GameView(arcade.View):
             arcade.draw_sprite(self.player_sprite)
             self.wall_list.draw()
             self.coin_list.draw()
+            self.death_list.draw()
+            self.monster_list.draw()
+            self.exit_list.draw()
