@@ -17,6 +17,7 @@ class GameView(arcade.View):
         # Choose a nice comfy background color
         self.background_color = arcade.csscolor.CORNFLOWER_BLUE
 
+
         self.map_name: str = f"maps/map1.txt"
 
         # Initialize attributes with dummy defaults so mypy knows they exist.
@@ -44,6 +45,7 @@ class GameView(arcade.View):
         self.map.import_map(map_filename)
         new_map: Dict[str, arcade.SpriteList[arcade.Sprite]] = self.map.build_level()
 
+
         # Use keys as defined in Map.build_level()
         self.wall_list = new_map["walls"]
         self.coin_list = new_map["coins"]
@@ -63,6 +65,22 @@ class GameView(arcade.View):
             self.player_sprite, self.wall_list, gravity_constant=0.5
         )
         self.camera = arcade.camera.Camera2D()
+        self.splash("Hello world!", 5)
+
+    #function to display a message for a certain time
+    # marche pas encore, mais je l'ai mis pour le futur
+    def splash(self, text: str, duration: float = 5.0) -> None:
+        # build or update a Text object once
+        self.message_text = arcade.Text(
+            text,
+            x = 0,
+            y = 500,
+            color   = arcade.color.WHITE,
+            font_size = 70,
+            anchor_x = "center",
+            anchor_y = "center",
+        )
+        self.message_timer = duration
 
     def on_key_press(self, key: int, modifiers: int) -> None:
         """Called when the user presses a key on the keyboard."""
@@ -107,9 +125,13 @@ class GameView(arcade.View):
         
         if arcade.check_for_collision_with_list(self.player_sprite, self.death_list):
             arcade.play_sound(self.game_over_sound)
-            self.setup(self.map_name)         # simple “restart level”
+            self.setup(self.map_name) 
             return
 
+        if arcade.check_for_collision_with_list(self.player_sprite, self.exit_list):
+
+            self.setup("maps/map2.txt")         # simple “restart level”
+            return
         # Update the physics engine if it's initialized.
     
         if self.physics_engine is not None:
@@ -121,6 +143,11 @@ class GameView(arcade.View):
                 arcade.play_sound(self.game_over_sound)
                 self.setup(self.map_name)                     # simple “restart”
                 return
+        """
+        if self.message_timer > 0:
+            self.message_timer -= delta_time
+            if self.message_timer <= 0:
+                self.message_text = arcade.Text("",0,0)"""
 
             
             
@@ -135,3 +162,6 @@ class GameView(arcade.View):
             self.death_list.draw()
             self.monster_list.draw()
             self.exit_list.draw()
+            """
+            if self.message_text:                   # cached → very fast
+                self.message_text.draw()"""

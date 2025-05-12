@@ -110,15 +110,16 @@ class Map:
                     exit_list.append(exit_sprite)
                 
                 elif symbol == 'o':                          # vrai Blob
-                    enemy1: entities.Enemy = entities.Blob((x, y),
+                    blob: entities.Enemy = entities.Blob((x, y),
                                         speed=1)
-                    monster_list.append(enemy1)
+                    monster_list.append(blob)
                     continue                                 # on passe à la prochaine case
 
                 elif symbol == 'b':                          # (optionnel) Bat
-                    enemy2: entities.Enemy = entities.Bat((x, y + 128))
-                    monster_list.append(enemy2)
-                    continue
+                    # mapgen.py or elsewhere
+                    bat:entities.Enemy = entities.Bat((x, y + 200), radius_px=500, speed=3)
+                    monster_list.append(bat)
+
 
 
                 elif symbol in texture_mapping:

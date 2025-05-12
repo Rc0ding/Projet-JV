@@ -16,7 +16,8 @@ from __future__ import annotations
 import math
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
-
+import random
+import math
 import arcade
 
 # ---------------------------------------------------------------------------
@@ -127,27 +128,50 @@ class Blob(Enemy):
 class Bat(Enemy):
     TEXTURE: str = "ressources/bat.png"
 
-    def __init__(self,
-                 pos_px: Tuple[float, float],
-                 amplitude_px: int = 48,
-                 period_s: float = 2.0,
-                 speed: int = 2) -> None:
+    def __init__(
+        self,
+        pos_px: Tuple[float, float],
+        radius_px: int = 150,
+        speed: int = 2,
+    ) -> None:
         super().__init__(pos_px, speed)
-        self._ampl = amplitude_px
-        self._period = period_s
-        self._time = 0.0
+        self._spawn_x, self._spawn_y = pos_px
+        self._radius = radius_px
 
-    def step(self, delta: float) -> None:
-        # Horizontal drift
-        self.center_x += self._direction * self._speed
+        # First random target inside the circle
+        self._pick_new_target()
 
-        # Vertical sine‑wave oscillation
-        self._time += delta
-        self.center_y = self._base_y + self._ampl * math.sin(
-            2.0 * math.pi * self._time / self._period
-        )
+    # ──────────────────────────────────────────────────────────────────
+    # Helpers
+    # ──────────────────────────────────────────────────────────────────
+    def _pick_new_target(self) -> None:
+        angle = random.uniform(0, 2 * math.pi)
+        r = random.uniform(0, self._radius)
+        self._target_x = self._spawn_x + r * math.cos(angle)
+        self._target_y = self._spawn_y + r * math.sin(angle)
 
-    def post_step(self) -> None:
-        # Reverse when leaving nominal level bounds (hard‑coded 0–4000 px)
-        if self.left < 0 or self.right > 1200:
+        # Determine facing
+        old_dir = self._direction
+        self._direction = 1 if self._target_x >= self.center_x else -1
+        if self._direction != old_dir:
             self.reversy()
+
+    # ──────────────────────────────────────────────────────────────────
+    # AI core
+    # ──────────────────────────────────────────────────────────────────
+    def step(self, delta: float) -> None:
+        # Vector towards target
+        dx = self._target_x - self.center_x
+        dy = self._target_y - self.center_y
+        dist = math.hypot(dx, dy)
+
+        # Close enough → choose a new random point
+        if dist < self._speed:
+            self._pick_new_target()
+            return
+
+        # Normalise & move
+        vx = self._speed * dx / dist
+        vy = self._speed * dy / dist
+        self.center_x += vx
+        self.center_y += vy
