@@ -1,59 +1,42 @@
 # sword.py
 from __future__ import annotations
 import math
-import arcade
 from typing import Tuple
+import arcade
 
 
 class Sword:
-    """
-    Petite classe « plug-and-play » qui gère l'épée :
-      • chargement du sprite,
-      • suivi de la position du joueur,
-      • (dé)masquage via clic souris,
-      • dessin conditionnel.
+    """Sprite d’épée (tout calculé à la main, sans anchor_x / y Arcade)."""
 
-    On peut facilement dériver ou étendre la classe plus tard si besoin.
-    """
+    # Réglez ces deux constantes si besoin
+    _PIVOT_RAW: Tuple[int, int] = (32, 10)   # poignée dans le PNG
+    _ANGLE_OFFSET: float = -41.2             # sprite Kenney pointe ↑
 
     def __init__(
         self,
         texture: str = "assets/kenney-voxel-items-png/sword_silver.png",
-        scale: float = 0.5 * 0.7,
-        offset: Tuple[float, float] = (0.0, 0.0),
+        scale: float = 0.35,
+        offset: Tuple[float, float] = (14, -10),   # main par rapport au centre joueur
     ) -> None:
-        # Sprite de l'épée
-        self.sprite: arcade.Sprite = arcade.Sprite(texture, scale)
-        # Décalage éventuel par rapport au centre du joueur (main droite, etc.)
-        self._offset: Tuple[float, float] = offset
-        # Visibilité courante
-        self.visible: bool = False
+        self.sprite = arcade.Sprite(texture, scale=scale)
 
-        # On place l'épée hors-écran par sécurité
-        self.sprite.center_x = self.sprite.center_y = -1_000.0
+        # Vecteur pivot → centre (χ) en monde
+        tex_w, tex_h = self.sprite.texture.width, self.sprite.texture.height
+        chi_x = (tex_w / 2 - self._PIVOT_RAW[0]) * scale
+        chi_y = (tex_h / 2 - self._PIVOT_RAW[1]) * scale
+        self._chi = (chi_x, chi_y)
 
-    # --------------------------------------------------------------------- #
-    # API publique – appelée depuis GameView
-    # --------------------------------------------------------------------- #
-    def update_position(self, player: arcade.Sprite) -> None:
-        """Fait suivre l'épée au joueur, même si elle est cachée."""
-        self.sprite.center_x = player.center_x + self._offset[0]
-        self.sprite.center_y = player.center_y + self._offset[1]
+        self._hand_offset = offset
+        self.visible = False
+        self.sprite.center_x = self.sprite.center_y = -1_000.0  # hors champ
 
-    # Les deux méthodes suivantes se branchent directement
-    # sur on_mouse_press / on_mouse_release de GameView
-    def on_mouse_press(
-        self, x: int, y: int, button: int, modifiers: int
-    ) -> None:  # noqa: D401 — style Arcade
-        """Montre l'épée tant que le bouton est enfoncé."""
+    # ---------------------------------------------------------------- API
+    def on_mouse_press(self, *_):  # type: ignore[override]
         self.visible = True
 
-    def on_mouse_release(
-        self, x: int, y: int, button: int, modifiers: int
-    ) -> None:
-        """Cache l'épée au relâchement du bouton."""
+    def on_mouse_release(self, *_):  # type: ignore[override]
         self.visible = False
-    
+
     def update_angle(
         self,
         cursor_x: int,
@@ -61,24 +44,48 @@ class Sword:
         camera: arcade.Camera2D,
         player: arcade.Sprite,
     ) -> None:
+        """Angle entre la main et le curseur, en degrés Arcade (0°=→, CCW)."""
+        if hasattr(camera, "screen_to_world"):
+            world_x, world_y = camera.screen_to_world(cursor_x, cursor_y)
+        else:  # rétrocompatibilité
+            win = arcade.get_window()
+            world_x = cursor_x - win.width / 2 + camera.position[0]
+            world_y = cursor_y - win.height / 2 + camera.position[1]
+
+        hand_x = player.center_x + self._hand_offset[0]
+        hand_y = player.center_y + self._hand_offset[1]
+
+        dx, dy = world_x - hand_x, world_y - hand_y
+        self.sprite.angle = math.degrees(math.atan2(dx, dy)) + self._ANGLE_OFFSET
+
+    def update_position(self, player: arcade.Sprite) -> None:
         """
-        Oriente l’épée pour qu’elle pointe vers le curseur.
-
-        On convertit la position souris (fenêtre) → monde
-        puis on calcule l’angle entre joueur et curseur.
+        Place le centre du sprite pour que la poignée reste sur la main.
+        Inversion de rotation (horaire) pour correspondre à Arcade.
         """
-        window = arcade.get_window()
-        
-        # Conversion écran → monde (caméra 2D)
-        world_x = cursor_x - window.width / 2 + camera.position[0]
-        world_y = cursor_y - window.height / 2 + camera.position[1]
+        θ = math.radians(self.sprite.angle)
+        cos_θ, sin_θ = math.cos(θ), math.sin(θ)
 
-        dx = world_x - player.center_x
-        dy = world_y - player.center_y
-        # 0° = droite, 90° = haut
-        self.sprite.angle = math.degrees(math.atan2(dx, dy)-(math.pi*(47.7/180)))
+        # ------- rotation inversée (sens horaire) ------------------------
+        dx =  self._chi[0] * cos_θ + self._chi[1] * sin_θ
+        dy = -self._chi[0] * sin_θ + self._chi[1] * cos_θ
+        # -----------------------------------------------------------------
 
+        self.sprite.center_x = player.center_x + self._hand_offset[0] + dx
+        self.sprite.center_y = player.center_y + self._hand_offset[1] + dy
+
+    # --------------------------------------------------- Debug optionnel
+    def debug_draw_pivot(self) -> None:
+        θ = math.radians(self.sprite.angle)
+        cos_θ, sin_θ = math.cos(θ), math.sin(θ)
+        dx =  self._chi[0] * cos_θ + self._chi[1] * sin_θ
+        dy = -self._chi[0] * sin_θ + self._chi[1] * cos_θ
+        px = self.sprite.center_x - dx
+        py = self.sprite.center_y - dy
+        arcade.draw_line(px, py, self.sprite.center_x, self.sprite.center_y,
+                         arcade.color.RED, 2)
+
+    # --------------------------------------------------- Draw
     def draw(self) -> None:
-        """Dessine l'épée uniquement si `visible` est vrai."""
         if self.visible:
             arcade.draw_sprite(self.sprite)

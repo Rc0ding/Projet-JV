@@ -34,7 +34,7 @@ class GameView(arcade.View):
         self.game_over_sound: arcade.Sound = arcade.load_sound(":resources:sounds/gameover1.wav")
 
         # === Sword setup ===
-        self.sword : Sword = Sword(offset=(14.0, -10.0))
+        self.sword : Sword = Sword(offset=(12,-28))
         # ===================
 
         # Build the level
@@ -162,8 +162,8 @@ class GameView(arcade.View):
             self.death_list.draw()
             self.monster_list.draw()
             self.exit_list.draw()
-
             self.sword.draw()
+        
 
 
     def splash(self, text: str, duration: float = 5.0) -> None:
