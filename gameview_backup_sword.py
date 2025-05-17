@@ -1,6 +1,5 @@
-from __future__ import annotations
 import arcade
-import math
+from __future__ import annotations
 import time
 from typing import Dict, List, Optional
 from mapgen import Map
@@ -34,7 +33,14 @@ class GameView(arcade.View):
         self.game_over_sound: arcade.Sound = arcade.load_sound(":resources:sounds/gameover1.wav")
 
         # === Sword setup ===
-        self.sword : Sword = Sword(offset=(14.0, -10.0))
+        self.sword_sprite = arcade.Sprite(
+            "assets/kenney-voxel-items-png/sword_silver.png",
+            scale=0.5 * 0.7,
+        )
+        self.sword_list = arcade.SpriteList()
+        self.sword_list.append(self.sword_sprite)
+        # Control whether we draw the sword
+        self.show_sword: bool = False
         # ===================
 
         # Build the level
@@ -65,9 +71,21 @@ class GameView(arcade.View):
 
         self.splash("Hello world!", 5)
 
-        # L'épée démarre cachée mais déjà placée sur le joueur
-        self.sword.visible = False
-        self.sword.update_position(self.player_sprite)
+        # Position sword initially off-screen
+        self.sword_sprite.center_x = -100
+        self.sword_sprite.center_y = -100
+
+    def splash(self, text: str, duration: float = 5.0) -> None:
+        self.message_text = arcade.Text(
+            text,
+            x=0,
+            y=500,
+            color=arcade.color.WHITE,
+            font_size=70,
+            anchor_x="center",
+            anchor_y="center",
+        )
+        self.message_timer = duration
 
     def on_key_press(self, key: int, modifiers: int) -> None:
         match key:
@@ -89,36 +107,9 @@ class GameView(arcade.View):
                 self.player_sprite.change_x = 0
 
     def on_update(self, delta_time: float) -> None:
+        # Camera follows player horizontally
+        self.camera.position = [self.player_sprite.center_x, 360]  # type: ignore
 
-        # Physics step
-        if self.physics_engine is not None:
-            self.physics_engine.update()
-
-        
-        # 0) ArmSwing - élimination immédiate
-        if self.sword.visible:
-            slain = arcade.check_for_collision_with_list(
-                self.sword.sprite,
-                self.monster_list,
-            )
-            for monster in slain:
-                monster.remove_from_sprite_lists()
-                print("Monstre éliminé !", monster)      # <-- debug
-        
-
-        
-
-        # Monster AI and collision
-        for monster in self.monster_list:
-            monster.update(delta_time, self.wall_list)
-            if arcade.check_for_collision(self.player_sprite, monster):
-                arcade.play_sound(self.game_over_sound)
-                self.setup(self.map_name)
-                return
-
-        # L'épée suit TOUT LE TEMPS la position du joueur
-        self.sword.update_position(self.player_sprite)
-        
         # Collect coins
         coins: List[arcade.Sprite] = arcade.check_for_collision_with_list(
             self.player_sprite, self.coin_list
@@ -134,24 +125,37 @@ class GameView(arcade.View):
         if arcade.check_for_collision_with_list(self.player_sprite, self.exit_list):
             self.setup("maps/map2.txt")
             return
-        # Camera follows player horizontally
-        self.camera.position = [self.player_sprite.center_x, 360]  # type: ignore
 
+        # Physics step
+        if self.physics_engine is not None:
+            self.physics_engine.update()
+
+        # Monster AI and collision
+        for monster in self.monster_list:
+            monster.update(delta_time, self.wall_list)
+            if arcade.check_for_collision(self.player_sprite, monster):
+                arcade.play_sound(self.game_over_sound)
+                self.setup(self.map_name)
+                return
+
+        # Always keep sword positioned at player if visible
+        self.sword_sprite.center_x = self.player_sprite.center_x
+        self.sword_sprite.center_y = self.player_sprite.center_y
+
+    # Modified
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
-        self.sword.on_mouse_press(x, y, button, modifiers)
+        """Show the sword while the mouse button is held."""
+        self.show_sword = True
 
+    # Modified
     def on_mouse_release(self, x: int, y: int, button: int, modifiers: int) -> None:
-        self.sword.on_mouse_release(x, y, button, modifiers)
-
-    def on_mouse_motion(self, x, y, dx, dy):
-        self.sword.update_angle(x, y, self.camera, self.player_sprite)
-
+        """Hide the sword when the mouse button is released."""
+        self.show_sword = False
 
     def display_sword(self) -> None:
         """Draw the sword (if flagged visible)."""
         if self.show_sword:
             self.sword_list.draw()
-
 
     def on_draw(self) -> None:
         self.clear()
@@ -163,17 +167,5 @@ class GameView(arcade.View):
             self.monster_list.draw()
             self.exit_list.draw()
 
-            self.sword.draw()
-
-
-    def splash(self, text: str, duration: float = 5.0) -> None:
-        self.message_text = arcade.Text(
-            text,
-            x=0,
-            y=500,
-            color=arcade.color.WHITE,
-            font_size=70,
-            anchor_x="center",
-            anchor_y="center",
-        )
-        self.message_timer = duration
+            # Only draw sword when requested
+            self.display_sword()
