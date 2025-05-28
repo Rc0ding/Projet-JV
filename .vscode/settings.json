@@ -1,0 +1,22 @@
+{
+  // enable the extension
+  "python.linting.mypyEnabled": true,
+
+  // use the mypy inside the venv (path relative to workspace root)
+  "python.linting.mypyPath": "${workspaceFolder}/.venv/Scripts/mypy",
+
+  // pass the flags so mypy never aborts early
+  "python.linting.mypyArgs": [
+    "--strict",
+    "--show-traceback",
+    "--no-error-summary"
+  ],
+
+  // run every file from the workspace root to avoid canonicalise-path bug
+  "python.linting.cwd": "${workspaceFolder}",
+  "python.testing.pytestArgs": [
+    "tests"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+}

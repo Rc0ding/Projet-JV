@@ -1,0 +1,210 @@
+"""
+platform_build.py  – standalone, mypy-strict friendly.
+Build MovingPlatform sprites for one level without external helpers.
+"""
+
+from __future__ import annotations
+
+from typing import Dict, List, Tuple, Generator
+
+from src.map_builder.platforms import Platform
+
+from src.helper import grid_to_world, grid_row, grid_col
+
+Meta = Dict[str, float | int | List[str]]
+
+# ──────────────────────────────────────────────────────────────
+# ASCII glyph sets (leave as is)
+# ──────────────────────────────────────────────────────────────
+ELIGIBLE = {"=", "-", "x", "£", "E", "^"}   # block glyphs
+ARROWS_H = {"←", "→"}
+ARROWS_V = {"↑", "↓"}
+
+# ──────────────────────────────────────────────────────────────
+# Tiny in-file helpers – replace former src.helper.*
+# ──────────────────────────────────────────────────────────────
+
+# ──────────────────────────────────────────────────────────────
+# Public entry – build platforms
+# ──────────────────────────────────────────────────────────────
+def build_platforms(
+    rows: List[str],
+    meta: Dict[str, int],
+    tile_textures: Dict[str, str],
+) -> List[Platform]:
+    """
+    Return a list of MovingPlatform sprites built from an ASCII map.
+    `meta` MUST contain at least:  tile, scale
+    """
+    meta_with_rows = rows
+    width = meta["width"]
+    print("Building platforms from rows:", meta_with_rows)
+    print("Unique chars in rows:", sorted({c for line in rows for c in line}))
+    meta_with_rows.pop(0)
+    blocks = _label_blocks(meta_with_rows)
+    print(f"Blocks found: {blocks}")
+    series_h, series_v = _collect_arrow_series(meta_with_rows,width)
+    print(f"Horizontal arrow series: {series_h}")
+    print(f"Vertical arrow series: {series_v}")
+    sprites: List[Platform] = []
+    wx:float
+    wy:float
+    """
+    for y,line in enumerate(rows):
+        for x,ch in enumerate(line):
+            if ch in ELIGIBLE:
+                print("ELIGIBLE char", ch, "at", (x,y))
+    """
+
+    for cells in blocks.values():
+        col_min = min(c for c, _ in cells)
+        col_max = max(c for c, _ in cells)
+        row_min = min(r for _, r in cells)
+        row_max = max(r for _, r in cells)
+
+        chosen : tuple[int, Tuple[int, int], int] | None = find_series_for_block(cells, series_h, axis="x")
+        axis = "x"
+        if chosen is None:
+            chosen = find_series_for_block(cells, series_v, axis="y")
+            axis = "y"
+        if chosen is None:
+            continue
+
+        _, (ser_min, ser_max), direction = chosen
+
+        if axis == "x":
+            g_left, g_right = ser_min - col_min, ser_max - col_max
+            b_left, b_right = grid_row(g_left, g_right)
+
+            for col, row in cells:
+                wx, wy = grid_to_world(col, row)
+                if direction == -1:          # start at right edge
+                    wx += b_right - b_left
+                sprites.append(
+                    Platform(
+                        texture=tile_textures[rows[row][col]],
+                        start_pos=(wx, wy),
+                        axis="x",
+                        direction=direction == 1,
+                        boundary_a=b_left,
+                        boundary_b=b_right,
+                    )
+                )
+        else:  # axis == "y"
+            g_bot, g_top = ser_min - row_min, ser_max - row_max
+            b_bot, b_top = grid_col(g_bot, g_top)
+
+            for col, row in cells:
+                wx, wy = grid_to_world(col, row)
+                if direction == -1:          # '↓' – start at top edge
+                    wy += b_top - b_bot
+                sprites.append(
+                    Platform(
+                        texture=tile_textures[rows[row][col]],
+                        start_pos=(wx, wy),
+                        axis="y",
+                        direction=direction == 1,
+                        boundary_a=b_bot,
+                        boundary_b=b_top,
+                    )
+                )
+    return sprites
+
+
+# ──────────────────────────────────────────────────────────────
+# Internals (unchanged logic, strict-typed)
+# ──────────────────────────────────────────────────────────────
+GridPos = Tuple[int, int]
+SeriesH = Dict[Tuple[int, Tuple[int, int]], int]
+SeriesV = Dict[Tuple[int, Tuple[int, int]], int]
+
+
+def _label_blocks(rows: List[str]) -> Dict[int, List[GridPos]]:
+    h, w = len(rows), len(rows[0])
+    seen: list[list[bool]] = [[False] * w for _ in range(h)]
+    blocks: Dict[int, list[GridPos]] = {}
+    current = 0
+
+    def neigh(c: int, r: int) -> Generator[GridPos, None, None]:
+        if c > 0:      yield c - 1, r
+        if c < w - 1:  yield c + 1, r
+        if r > 0:      yield c, r - 1
+        if r < h - 1:  yield c, r + 1
+
+    for r in range(h):
+        #print(f"Row {r} of {h}: {rows[r]}")
+        for c in range(w):
+            #print(f"  Col {c} of {w}: {rows[r][c]}")
+            if seen[r][c] or rows[r][c] not in ELIGIBLE:
+                continue
+            #print(f"  Found new block at ({c}, {r})")
+            queue: list[GridPos] = [(c, r)]
+            blocks[current] = []
+            seen[r][c] = True
+            while queue:
+                cc, rr = queue.pop()
+                blocks[current].append((cc, rr))
+                for nc, nr in neigh(cc, rr):
+                    if not seen[nr][nc] and rows[nr][nc] in ELIGIBLE:
+                        seen[nr][nc] = True
+                        queue.append((nc, nr))   # ← indented into the `if`
+            current += 1
+    return blocks
+
+
+
+def _collect_arrow_series(rows: List[str], width:int) -> Tuple[SeriesH, SeriesV]:
+    h, w = len(rows), width
+    #print(f"Collecting arrow series in {h} rows and {w} cols")
+    series_h: SeriesH = {}
+    series_v: SeriesV = {}
+
+
+    for r in range(h):
+        c = 0
+        while c < w and c < len(rows[r]):
+            #print(f"Checking char at ({c}, {len(rows[r])})")
+            ch = rows[r][c]
+            if ch in ARROWS_H:
+                start = c
+                direction = 1 if ch == "→" else -1
+                #print("test",c+1, len(rows[r]))
+                while c + 1 < w and c + 1 < len(rows[r]) and rows[r][c + 1] == ch:
+                    c += 1
+                series_h[(r, (start, c))] = direction
+            c += 1
+
+    for c in range(w):
+        r = 0
+        while r < h and c < len(rows[r]):
+            #print(f"Checking char at ({c}, {len(rows[r])})")
+            ch = rows[r][c]
+            if ch in ARROWS_V:
+                start = r
+                direction = 1 if ch == "↑" else -1
+                #print("test",c, len(rows[r+1]))
+                while r + 1 < h and c < len(rows[r+1]) and rows[r + 1][c] == ch:
+                    r += 1
+                #print(f"Col {c}, Row {r}: {ch}")
+                series_v[(c, (start, r))] = direction
+            r += 1
+ 
+    return series_h, series_v
+
+
+def find_series_for_block(
+    cells: List[GridPos],
+    series_dict: SeriesH | SeriesV,
+    axis: str,
+) -> tuple[int, Tuple[int, int], int] | None:
+    if axis == "x":
+        for (row, (start, end)), direction in series_dict.items():
+            entry_col = start - 1 if direction == 1 else end + 1
+            if sum(1 for c, r in cells if r == row and c == entry_col) == 1:
+                return row, (start, end), direction
+    else:
+        for (col, (start, end)), direction in series_dict.items():
+            entry_row = start - 1 if direction == 1 else end + 1
+            if sum(1 for c, r in cells if c == col and r == entry_row) == 1:
+                return col, (start, end), direction
+    return None

@@ -1,6 +1,6 @@
 import arcade
-from gameview import GameView
-from conftest import test_collect_coins
+from src.game.gameview import GameView
+
 # Constants
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
