@@ -1,6 +1,7 @@
-import arcade
 
-class Player(arcade.Sprite):
+from src.game.objects import Object
+
+class Player(Object):
 	"""The main player game object."""
 
 	is_move_initiated: bool
@@ -11,14 +12,31 @@ class Player(arcade.Sprite):
 	PLAYER_MOVEMENT_SPEED:float=10
 	PLAYER_JUMP_BUFFER:float=10
 
-	def __init__(self,texture:str, pos_x:float, pos_y:float) -> None:
+	def __init__(self, scale:float=0.5, pos_x:float=0, pos_y:float=0) -> None:
 
-		super().__init__(texture, scale=0.5)
-		self.center_x=pos_x
-		self.center_y=pos_y
-		self.is_move_initiated = False
+		super().__init__(
+			texture=":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png",
+			scale=scale,
+			pos=(pos_x,pos_y),
+			health=100           # stays inside GameObject, never reaches Sprite
+		)
+
 		#self.__buffered_jump_timer: float = 0
+	
+	def knockback(self, distance:float,delta_time:float) -> None:
+		"""Apply knockback to the object."""
+		self.center_x += distance * delta_time
+		self.center_y += distance * delta_time
 		
+		distance= distance * 0.8
+		if distance< 0.1:
+			distance=0
+		# To prevent sliding, you should implement ground friction in the update method
+		# For example: if on_ground: self.change_x *= 0.9  # Friction coefficient
+
+		print(f"Knockback applied: change_x={self.change_x}, change_y={self.change_y}")
+	
+
 	"""
 	def on_key_press(self, symbol: int, modifiers: int) -> None:
 		match symbol:

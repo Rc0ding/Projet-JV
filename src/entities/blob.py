@@ -36,11 +36,23 @@ class Blob(base_entity.Enemy):
         """Return a list of booleans: ground under ¼‑width steps of next box."""
         assert self._walls is not None
         samples: List[bool] = []
-        quarter = self.width / 4
+        
+        # Calculate 1/4 of the blob's width for sampling points
+        quarter = 1/4 * self.width
+        #MODIFIER PIXEL PERFECTION
+        # Check for ground at 4 points across the bottom of the blob:
+        # - Left edge (1/4 from left)
+        # - Center left (at center)
+        # - Center right (at center)
+        # - Right edge (1/4 from right)
         for offset in (-self.width / 2 + quarter, 0, self.width / 2 - quarter, self.width / 2):
+            # Calculate x position based on direction and offset
             x = next_center_x + offset * self._direction / abs(self._direction)
+            # Check 1 pixel below the bottom of the sprite
             y = self.bottom - 1
+            # Add True if there's ground (a wall) at this point, False otherwise
             samples.append(bool(arcade.get_sprites_at_point((x, y), self._walls)))
+        
         return samples
 
     def _collision_ahead(self) -> bool:

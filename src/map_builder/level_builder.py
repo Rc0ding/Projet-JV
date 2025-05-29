@@ -9,15 +9,21 @@ from src import constants_proj
 from src import helper
 from src.map_builder.platform_build import build_platforms
 from src.map_builder.platforms import Platform
+from src.game.player import Player
+#from src.map_builder.gates import Gate
+#from src.map_builder.switch import Switch
+#from src.helper import grid_to_world
 
 class LevelData(TypedDict):
     walls:     arcade.SpriteList[arcade.Sprite]
     coins:     arcade.SpriteList[arcade.Sprite]
     death:     arcade.SpriteList[arcade.Sprite]
     exit:      arcade.SpriteList[arcade.Sprite]
-    player:    arcade.SpriteList[arcade.Sprite]
+    player:    arcade.SpriteList[Player]
     monsters:  arcade.SpriteList[Enemy]
     platforms: arcade.SpriteList[Platform]
+    #gates:    arcade.SpriteList[Gate]
+    #switches: arcade.SpriteList[Switch]
 
 class LevelBuilder:
 
@@ -35,10 +41,11 @@ class LevelBuilder:
 		coin_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
 		death_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
 		exit_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
-		player_sprite_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
+		player_sprite_list: arcade.SpriteList[Player] = arcade.SpriteList()
 		monster_list: arcade.SpriteList[Enemy] = arcade.SpriteList(use_spatial_hash=True)
 		platforms: arcade.SpriteList[Platform] = arcade.SpriteList(use_spatial_hash=True)
-
+		#gate_list:   arcade.SpriteList[Gate]   = arcade.SpriteList(use_spatial_hash=True)
+		#switch_list: arcade.SpriteList[Switch] = arcade.SpriteList()
 
 
 
@@ -64,15 +71,7 @@ class LevelBuilder:
 					# Player start
 					# --------------------------------------------------------------
 					case 'S':
-						player_sprite = arcade.Sprite(
-							":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png",
-							scale=constants_proj.SCALE_FACTOR
-						)
-						print("\n")
-						print("\n")
-						print("Found player start at", x, y)
-						print("\n")
-						print("\n")
+						player_sprite = Player()
 						player_sprite.center_x = x
 						player_sprite.center_y = y
 						player_sprite_list.append(player_sprite)
@@ -132,6 +131,7 @@ class LevelBuilder:
 					case _:
 						pass
 		
+
 		# Build moving platforms from the map
 		platform_sprites = build_platforms(
 			rows,  # original (not reversed) rows for platform logic
@@ -139,8 +139,49 @@ class LevelBuilder:
 			textures.TEXTURES
 		)
 		for platform in platform_sprites:
-			print(f"Platform created at ({platform.center_x}, {platform.center_y}) axis={platform.axis} change_x={platform.change_x} change_y={platform.change_y}")
+			print(f"Platform created at ({platform.center_x}, {platform.center_y}) axis={platform.axis} change_x={platform.change_x} change_y={platform.change_y}, boundary_l={platform.boundary_left}, boundary_r={platform.boundary_right}")
 			platforms.append(platform)
+		
+		
+		"""# meta now contains the parsed header dict
+		gates_meta    = meta.get("gates", [])        # list[dict]
+		switches_meta = meta.get("switches", [])     # list[dict]
+
+		# ---- Gates ---------------------------------------------------
+		for g in gates_meta:
+			gx, gy = g["x"], g["y"]
+			wx, wy = grid_to_world(gx, gy)
+			gate = Gate((wx, wy), scale=constants_proj.SCALE_FACTOR)
+			if g.get("state", "closed") == "open":
+				gate.set_state(False)                # open
+			gate_list.append(gate)
+			if gate.is_solid:
+				wall_list.append(gate)               # solid gates act as walls
+
+		# ---- Switches ------------------------------------------------
+		for s in switches_meta:
+			sx, sy = s["x"], s["y"]
+			wx, wy = grid_to_world(sx, sy)
+			sw = Switch((wx, wy), scale=constants_proj.SCALE_FACTOR)
+
+		def _link(actions: list[dict] | None, on_state: bool) -> None:
+			if actions is None:
+				return
+			for act in actions:
+				gx, gy = act["x"], act["y"]
+				# find the gate obj created earlier
+				gate = next((g for g in gate_list if
+						g.center_x == grid_to_world(gx, 0)[0] and
+						g.center_y == grid_to_world(0, gy)[1]), None)
+				if gate:
+					sw.add_target(gate, open_when_on=on_state)
+
+				
+
+		_link(s.get("switch_on"),  True)
+		_link(s.get("switch_off"), False)
+		switch_list.append(sw)"""
+
 
 		if len(player_sprite_list) == 0:
 			raise ValueError("No player sprite found in the map (missing 'S' symbol)!")
@@ -153,5 +194,7 @@ class LevelBuilder:
 			"player": player_sprite_list,
 			"exit": exit_list,
 			"platforms": platforms
+			#"gates": gate_list,
+    			#"switches": switch_list,
 		}
 

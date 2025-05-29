@@ -4,7 +4,7 @@ from typing import Tuple
 
 class Platform(arcade.Sprite):
     """One tile that belongs to a larger coherent block."""
-    SPEED_PX_PER_FRAME = 1.5     #  global constant
+    SPEED_PX_PER_FRAME = 1 #  global constant
 
     def __init__(self, texture:str,start_pos:Tuple[float,float],axis:str,direction:bool,
                  boundary_a:float, boundary_b:float)-> None:

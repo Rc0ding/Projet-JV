@@ -13,10 +13,10 @@ class Bat(base_entity.Enemy):
         radius_px: int = 150,
         speed: int = 2,
     ) -> None:
-        super().__init__(pos_px, speed)
+        super().__init__(scale=1.25, pos_px=pos_px, speed=speed)
         self._spawn_x, self._spawn_y = pos_px
         self._radius = radius_px
-
+        self.health_bar.bar_y += 20
         # First random target inside the circle
         self._pick_new_target()
 

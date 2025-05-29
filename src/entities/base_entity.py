@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
 import arcade
+from src.game.objects import Object
 
 # ---------------------------------------------------------------------------
 # Typing helpers
@@ -20,11 +21,11 @@ SCALE: float = 0.5   # 128‑px art → 64‑px on screen
 # 1. Base autonomous enemy class
 # ---------------------------------------------------------------------------
 
-class Enemy(arcade.Sprite, ABC):
+class Enemy(Object, ABC):
     TEXTURE: str = ""
 
-    def __init__(self, pos_px: Tuple[float, float], speed: int) -> None:
-        super().__init__(self.TEXTURE, SCALE)
+    def __init__(self,  pos_px: Tuple[float, float], speed: int, scale: float = 0.5) -> None:
+        super().__init__(texture=self.TEXTURE, scale=scale, health=50)
         self.center_x, self.center_y = pos_px
 
         self._speed = speed
@@ -33,6 +34,7 @@ class Enemy(arcade.Sprite, ABC):
 
         # Will be set each frame by *update()*
         self._walls: Optional[arcade.SpriteList[arcade.Sprite]] = None
+
 
     # ------------------------------------------------------------------
     # Helpers
@@ -54,6 +56,6 @@ class Enemy(arcade.Sprite, ABC):
     def post_step(self) -> None:  # empty hook
         ...
 
-    def update(self, delta: float) -> None:  # type: ignore[override]
-        assert self._walls is not None, "Walls not injected!"
-        self.step(delta)
+    def update(self, delta_time: float=1/60, *args:Any,**kwargs:Any) -> None:
+        assert self._walls is not None, "Walls must be set before update"
+        self.step(delta_time)

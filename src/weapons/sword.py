@@ -2,7 +2,7 @@ import arcade
 from typing import Tuple
 import math
 from src.entities.base_entity import Enemy
-
+from src.game.player import Player
 class Weapon(arcade.Sprite):
 	"""
 	Generic weapon base that handles pivot math automatically.
@@ -14,20 +14,18 @@ class Weapon(arcade.Sprite):
 	"""
 	def __init__(
 	self,
-	player: arcade.Sprite,
 	camera: arcade.Camera2D,
 
 	texture: str,
 	pivot_raw: Tuple[float, float],
 	angle_offset: float,
-	hand_offset: Tuple[float, float] = (0.0, 0.0),
-	scale: float = 1.0,
+	hand_offset: Tuple[float, float] = (14.0, -10.0),
+	scale: float = 0.350,
 	) -> None:
 		super().__init__(texture, scale=scale)
-		self.player = player
 		self.camera = camera
 		self.visible = False
-		self._mouse_screen: Tuple[int, int] = (0, 0)
+		self._mouse_screen: Tuple[float, float] = (0, 0)
 
 		# compute pivot-to-center vector (_chi) in world units
 		w, h = self.texture.width, self.texture.height
@@ -39,79 +37,93 @@ class Weapon(arcade.Sprite):
 		self._hand_offset = hand_offset
 		self._angle_offset = angle_offset
 
-	def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
+	def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> None:
 		self._mouse_screen = (x, y)
 		if button == arcade.MOUSE_BUTTON_LEFT:
 			self.visible = True
 
-	def on_mouse_release(self, x: int, y: int, button: int, modifiers: int) -> None:
+	def on_mouse_release(self, x: float, y: float, button: int, modifiers: int) -> None:
 		self._mouse_screen = (x, y)
 		if button == arcade.MOUSE_BUTTON_LEFT:
 			self.visible = False
 
-	def on_mouse_motion(self, x: int, y: int, dx: int, dy: int) -> None:
+	def on_mouse_motion(self, x: float, y: float, dx: int, dy: int) -> None:
 		self._mouse_screen = (x, y)
 
-	def updating(self, dt:float) -> None:
+	def update_angle(
+        self,
+        camera: arcade.Camera2D,
+        player: Player,
+   	) -> None:
+		"""Angle entre la main et le curseur, en degrés Arcade (0°=→, CCW)."""
+
+		  # rétrocompatibilité
+		win = arcade.get_window()
+		cursor_x, cursor_y = self._mouse_screen
+		world_x = cursor_x - win.width / 2 + camera.position[0]
+		world_y = cursor_y - win.height / 2 + camera.position[1]
+
+		hand_x = player.center_x + self._hand_offset[0]
+		hand_y = player.center_y + self._hand_offset[1]
+
+		dx, dy = world_x - hand_x, world_y - hand_y
+		self.angle = math.degrees(math.atan2(dx, dy))
+
+	def update_position(self, player: arcade.Sprite) -> None:
 		"""
-		Called each frame: rotates and repositions the sprite so that its pivot
-		remains on the player’s hand and the blade points at the mouse.
+		Place le centre du sprite pour que la poignée reste sur la main.
+		Inversion de rotation (horaire) pour correspondre à Arcade.
 		"""
-		if not self.visible:
-			return
-		# convert screen mouse to world
-		mx, my, _ = self.camera.unproject(self._mouse_screen)
-		# compute hand world pos
-		hx = self.player.center_x + self._hand_offset[0]
-		hy = self.player.center_y + self._hand_offset[1]
-		# compute aiming angle
-		dx, dy = mx - hx, my - hy
-		angle = math.degrees(math.atan2(dy, dx)) + self._angle_offset
-		self.angle = angle
-		# rotate chi vector to find sprite center
-		rad = math.radians(angle)
-		cos_t, sin_t = math.cos(rad), math.sin(rad)
-		dx_chi = self._chi[0] * cos_t - self._chi[1] * sin_t
-		dy_chi = self._chi[0] * sin_t + self._chi[1] * cos_t
-		# place center so pivot sits at hand
-		self.center_x = hx + dx_chi
-		self.center_y = hy + dy_chi
+		θ = math.radians(self.angle)
+		cos_θ, sin_θ = math.cos(θ), math.sin(θ)
+
+		# ------- rotation inversée (sens horaire) ------------------------
+		dx =  self._chi[0] * cos_θ + self._chi[1] * sin_θ
+		dy = -self._chi[0] * sin_θ + self._chi[1] * cos_θ
+		# -----------------------------------------------------------------
+
+		self.center_x = player.center_x + self._hand_offset[0] + dx
+		self.center_y = player.center_y + self._hand_offset[1] + dy
+	def updating(self, player: Player) -> None:
+		"""Update the weapon position and angle based on player and mouse."""
+		if self.visible:
+			self.update_angle( self.camera, player)
+			self.update_position(player)
+	
 
 
 class Sword(Weapon):
 	"""Sword held by the player, with fixed pivot and offsets."""
 
-	_monster_list: arcade.SpriteList[arcade.Sprite]
+	_monster_list: arcade.SpriteList[Enemy]
 
 	def __init__(
 	self,
-	player: arcade.Sprite,
+	player: Player,
 	camera: arcade.Camera2D,
 	) -> None:
 		super().__init__(
-			player,
 			camera,
 			texture="assets/kenney-voxel-items-png/sword_silver.png",
 			pivot_raw=(32, 10),       # handle pixel in the image
 			angle_offset=-41.2,       # adjust so 0° → right
 			hand_offset=(14, -10),     # hand offset from player center
-			scale=0.35,
+			scale=0.9,
 		)
 		self._Sprite: arcade.Sprite= arcade.Sprite(path_or_texture=self.texture, scale=self.scale)
 
 	def environment(self, monster_list:arcade.SpriteList[Enemy]) -> None:
 		self._monster_list=monster_list
 	
-	def killing(self)->list[arcade.Sprite]:
-		slain:list[arcade.Sprite]
-		if self._visible and slain is not None:
-			slain = arcade.check_for_collision_with_list(
+	def killing(self) -> list[arcade.Sprite]:
+		if self.visible:
+			return arcade.check_for_collision_with_list(
 				self._Sprite,
 				self._monster_list,
 			)
-		return slain
-
+		return []
+	"""
 	def sword_update(self, dt:float)-> list[arcade.Sprite]:
 		self.updating(dt)
-		return self.killing()
-		
+		return self.killing()"""
+	

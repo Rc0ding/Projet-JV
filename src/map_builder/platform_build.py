@@ -9,7 +9,7 @@ from typing import Dict, List, Tuple, Generator
 
 from src.map_builder.platforms import Platform
 
-from src.helper import grid_to_world, grid_row, grid_col
+from src.helper import grid_to_world, grid_row
 
 Meta = Dict[str, float | int | List[str]]
 
@@ -34,52 +34,78 @@ def build_platforms(
 ) -> List[Platform]:
     """
     Return a list of MovingPlatform sprites built from an ASCII map.
-    `meta` MUST contain at least:  tile, scale
+    `meta` MUST contain at least: tile, scale.
+    
+    The function:
+      - Processes the ASCII rows of the level.
+      - Identifies eligible blocks.
+      - Collects horizontal and vertical arrow series.
+      - Matches arrow series with blocks to determine platform direction and boundaries.
+      - Creates Platform instances based on discovered data.
     """
+    # Create a working copy of rows.
     meta_with_rows = rows
+    # Extract the width value from meta.
     width = meta["width"]
     print("Building platforms from rows:", meta_with_rows)
     print("Unique chars in rows:", sorted({c for line in rows for c in line}))
+    # Remove the first element from meta_with_rows (possibly header/meta info).
     meta_with_rows.pop(0)
+    # Label connected blocks of eligible characters.
     blocks = _label_blocks(meta_with_rows)
     print(f"Blocks found: {blocks}")
-    series_h, series_v = _collect_arrow_series(meta_with_rows,width)
+    # Extract arrow series for horizontal and vertical directions.
+    series_h, series_v = _collect_arrow_series(meta_with_rows, width)
     print(f"Horizontal arrow series: {series_h}")
     print(f"Vertical arrow series: {series_v}")
+    # Initialize list to hold created platforms.
     sprites: List[Platform] = []
-    wx:float
-    wy:float
+    wx: float
+    wy: float
     """
-    for y,line in enumerate(rows):
-        for x,ch in enumerate(line):
+    # Debug loop to print eligible characters.
+    for y, line in enumerate(rows):
+        for x, ch in enumerate(line):
             if ch in ELIGIBLE:
-                print("ELIGIBLE char", ch, "at", (x,y))
+                print("ELIGIBLE char", ch, "at", (x, y))
     """
-
+    # Total number of rows for coordinate calculations.
+    length = len(rows)
+    # Process each block (group of connected cells)
     for cells in blocks.values():
-        col_min = min(c for c, _ in cells)
-        col_max = max(c for c, _ in cells)
-        row_min = min(r for _, r in cells)
-        row_max = max(r for _, r in cells)
+        # Determine the minimal and maximal column and row indices in the block.
+        #col_min = min(c for c, _ in cells)
+        #col_max = max(c for c, _ in cells)
 
-        chosen : tuple[int, Tuple[int, int], int] | None = find_series_for_block(cells, series_h, axis="x")
+
+        # Try to find a horizontal arrow series adjacent to the block.
+        chosen: tuple[int, Tuple[int, int], int] | None = fuse_series_for_block(cells, series_h, axis="x")
         axis = "x"
+        # If no horizontal series was found, try vertical.
         if chosen is None:
-            chosen = find_series_for_block(cells, series_v, axis="y")
+            chosen = fuse_vertical_series_for_block(cells, series_v)
             axis = "y"
+        # If still no series is found, skip this block.
         if chosen is None:
             continue
 
+        # Unpack the arrow series details.
         _, (ser_min, ser_max), direction = chosen
 
         if axis == "x":
-            g_left, g_right = ser_min - col_min, ser_max - col_max
-            b_left, b_right = grid_row(g_left, g_right)
+            # Calculate grid offsets for horizontal series.
+            g_left, g_right = ser_min, ser_max 
+            block_cols = [col for col, _ in cells]
+            block_min = min(block_cols)
+            block_max = max(block_cols)
 
             for col, row in cells:
-                wx, wy = grid_to_world(col, row)
-                if direction == -1:          # start at right edge
-                    wx += b_right - b_left
+                # Calculate per-tile bounds
+                a = g_left+( col - block_min)
+                b = g_right -( block_max - col)
+                b_left, b_right = grid_row(a, b)
+                print(f"Processing cell ({col}, {row}) with bounds ({b_left}, {b_right}), a={a}, b={b}")
+                wx, wy = grid_to_world(col, length - row - 1)
                 sprites.append(
                     Platform(
                         texture=tile_textures[rows[row][col]],
@@ -90,24 +116,30 @@ def build_platforms(
                         boundary_b=b_right,
                     )
                 )
-        else:  # axis == "y"
-            g_bot, g_top = ser_min - row_min, ser_max - row_max
-            b_bot, b_top = grid_col(g_bot, g_top)
+        else:
+    # Calculate grid offsets for vertical series.
+            g_top, g_bottom = ser_min, ser_max
+            block_rows = [row for _, row in cells]
+            block_min = min(block_rows)
+            block_max = max(block_rows)
 
             for col, row in cells:
-                wx, wy = grid_to_world(col, row)
-                if direction == -1:          # '↓' – start at top edge
-                    wy += b_top - b_bot
+                # Calculate per-tile bounds
+                a = g_top + (row - block_min)
+                b = g_bottom - (block_max - row)
+                b_top, b_bottom = grid_row(a, b)
+                wx, wy = grid_to_world(col, length - row - 1)
                 sprites.append(
                     Platform(
                         texture=tile_textures[rows[row][col]],
                         start_pos=(wx, wy),
                         axis="y",
                         direction=direction == 1,
-                        boundary_a=b_bot,
-                        boundary_b=b_top,
+                        boundary_a=b_top,
+                        boundary_b=b_bottom,
                     )
-                )
+                )    
+    # Return the list of created platform sprites.
     return sprites
 
 
@@ -124,7 +156,6 @@ def _label_blocks(rows: List[str]) -> Dict[int, List[GridPos]]:
     seen: list[list[bool]] = [[False] * w for _ in range(h)]
     blocks: Dict[int, list[GridPos]] = {}
     current = 0
-
     def neigh(c: int, r: int) -> Generator[GridPos, None, None]:
         if c > 0:      yield c - 1, r
         if c < w - 1:  yield c + 1, r
@@ -147,7 +178,7 @@ def _label_blocks(rows: List[str]) -> Dict[int, List[GridPos]]:
                 for nc, nr in neigh(cc, rr):
                     if not seen[nr][nc] and rows[nr][nc] in ELIGIBLE:
                         seen[nr][nc] = True
-                        queue.append((nc, nr))   # ← indented into the `if`
+                        queue.append((nc, nr))   # MARCHE PAS SI PREMEIRE LIGNE PAS VIDE ??
             current += 1
     return blocks
 
@@ -207,4 +238,57 @@ def find_series_for_block(
             entry_row = start - 1 if direction == 1 else end + 1
             if sum(1 for c, r in cells if c == col and r == entry_row) == 1:
                 return col, (start, end), direction
+    return None
+
+def fuse_series_for_block(
+    cells: List[GridPos],
+    series_dict: SeriesH,
+    axis: str,
+) -> tuple[int, Tuple[int, int], int] | None:
+    """Fuse all contiguous arrow series adjacent to the block into one."""
+    if axis != "x":
+        return None  # Only horizontal for now
+
+    row_indices = set(r for _, r in cells)
+
+    for row in row_indices:
+        # Find all series on this row adjacent to the block
+        series: List[Tuple[int, int, int]] = []
+        for (ser_row, (start, end)), direction in series_dict.items():
+            if ser_row != row:
+                continue
+            entry_col = start - 1 if direction == 1 else end + 1
+            if any(r == row and c == entry_col for c, r in cells):
+                series.append((start, end, direction))
+        if not series:
+            continue
+        # Fuse all contiguous series
+        min_start = min(s for s, _, _ in series)
+        max_end = max(e for _, e, _ in series)
+        # Use direction of the first series (could be improved)
+        directiond: int = series[0][2]
+        return row, (min_start, max_end), directiond
+    return None
+
+def fuse_vertical_series_for_block(
+    cells: list[tuple[int, int]],
+    series_dict: SeriesV,
+) -> tuple[int, tuple[int, int], int] | None:
+    # Only vertical axis
+    col_indices = set(c for c, _ in cells)
+    for col in col_indices:
+        # Find all series on this col adjacent to the block
+        series: list[tuple[int, int, int]] = []
+        for (ser_col, (start, end)), direction in series_dict.items():
+            if ser_col != col:
+                continue
+            entry_row = start - 1 if direction == 1 else end + 1
+            if any(c == col and r == entry_row for c, r in cells):
+                series.append((start, end, direction))
+        if not series:
+            continue
+        min_start = min(s for s, _, _ in series)
+        max_end = max(e for _, e, _ in series)
+        direction = series[0][2]
+        return col, (min_start, max_end), direction
     return None
