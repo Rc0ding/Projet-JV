@@ -49,6 +49,7 @@ class GameView(arcade.View):
 		self.player_sprite: Player
 		self.switch:        Switch
 		self.score: int = 0
+
 		# physics & weapons
 		self.physics_engine: Optional[arcade.PhysicsEnginePlatformer] = None
 		self.sword :  Sword
@@ -81,7 +82,12 @@ class GameView(arcade.View):
 		# ----- player -----
 		self.player_sprite      = self.player_sprite_list[0]
 		self.initial_x, self.initial_y = self.player_sprite.center_x, self.player_sprite.center_y
-
+		self.score = 0
+		self.score_text = arcade.Text(
+			"Score: 0",
+			x=10, y=720,
+			font_size=20, color=arcade.color.WHITE,
+			font_name="Kenney Future",)
 		# ----- physics -----
 		self.physics_engine = arcade.PhysicsEnginePlatformer(
 			player_sprite=self.player_sprite,
@@ -102,7 +108,7 @@ class GameView(arcade.View):
 		for monster in self.monster_list:
 			monster.set_environment(self.wall_list)
 
-		print("Level loaded – switches:", len(self.switches), "gates:", len(self.gates))
+		
 
 	# ───────────────────── Input handlers ───────────────────
 	def on_key_press(self, symbol: int, modifiers: int) -> None:
@@ -206,6 +212,8 @@ class GameView(arcade.View):
 				m.take_damage(self.bow.DAMAGE)
 				if m.current_health <= 0:
 					m.remove_from_sprite_lists()
+					self.score+=1
+					self.score_text.text = f"Score: {self.score}"
 					arrow.remove_from_sprite_lists()
 					break                                   # arrow spent → stop further checks
 
@@ -235,7 +243,8 @@ class GameView(arcade.View):
 		# ---- coins ----
 		for coin in arcade.check_for_collision_with_list(self.player_sprite, self.coin_list):
 			coin.remove_from_sprite_lists()
-			score += 1
+			self.score += 1
+			self.score_text.text = f"Score: {self.score}"
 
 		# ---- player status ----
 		self.player_sprite.update_invincibility(delta_time)
@@ -283,6 +292,7 @@ class GameView(arcade.View):
 			self.monster_list.draw()
 			self.exit_list.draw()
 			self.platforms.draw()
+			self.score_text.draw()
 
 			self.player_sprite.draw_health_bar()
 			for monster in self.monster_list:
