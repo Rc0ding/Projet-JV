@@ -26,9 +26,6 @@ class Weapon(arcade.Sprite):
 		self.visible = False
 		self._mouse_screen: Tuple[float, float] = (0, 0)
 		self.pivot_raw = pivot_raw
-		self.DAMAGE: int = 25           # points removed on hit
-		self.COOLDOWN: float = 0.5    # seconds between two hits
-		self._cooldown_timer: float = 0
 
 		# compute pivot-to-center vector (_chi) in world units
 		tex_w, tex_h = self.texture.width, self.texture.height
@@ -103,18 +100,10 @@ class Weapon(arcade.Sprite):
 			print(f"LEFT, player: {player.center_x}, cursor: {cursor_x}")
 			self.center_x = player.center_x + self._hand_offset[0]+dx
 			return
-		print(f"RIGHT, player: {player.center_x}, cursor: {cursor_x}")
 		self.center_x = player.center_x - self._hand_offset[0]+dx
 
 	
-	def ready(self) -> bool:
-		return self._cooldown_timer <= 0 and self.visible
-
-	def update_cooldown(self, dt: float) -> None:
-		self._cooldown_timer = max(0, self._cooldown_timer - dt)
-
-	def reset_cooldown(self) -> None:
-		self._cooldown_timer = self.COOLDOWN
+	
 	# ──────────────────────────────────────────────────────────────────────
 	# 3)  Frame-level update helper
 	# ──────────────────────────────────────────────────────────────────────
