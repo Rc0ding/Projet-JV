@@ -21,8 +21,8 @@ OUTPUT = pathlib.Path("benchmarks")
 OUTPUT.mkdir(exist_ok=True)
 
 # Paramètres à explorer
-WALL_STEPS  = [1, 10, 50, 100, 500, 1_000, 5_000, 10_000, 100_000]
-ENEMY_STEPS = [1, 3, 5, 10, 50, 100, 500, 1_000, 10_000]
+WALL_STEPS  = [1, 10, 50, 100, 500, 1_000, 5_000, 10_000]
+ENEMY_STEPS = [1, 3, 5, 10, 50, 100, 500, 1_000]
 
 FRAME_COUNT = 200      # appels on_update() par cas
 DT          = 1 / 60   # delta fixe (60 fps)
