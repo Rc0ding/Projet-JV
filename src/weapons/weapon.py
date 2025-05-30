@@ -6,9 +6,9 @@ class Weapon(arcade.Sprite):
 	"""
 	Generic weapon base that handles pivot math automatically.
 
-	Subclasses only need to supply:
+	We designed the Subclasses so that we only need to give:
 	- pivot_raw: pixel (px) coordinate of the handle pivot in the source image
-	- angle_offset: degrees to add so the sprite’s 0° points toward the cursor
+	- angle_offset: degrees to add so the sprites 0° points toward the cursor
 	- hand_offset: world offset (px) from the player center to the pivot
 	"""
 	def __init__(
@@ -44,9 +44,7 @@ class Weapon(arcade.Sprite):
 		self._mouse_screen = (x, y)
 		if button == arcade.MOUSE_BUTTON_LEFT:
 			self.visible = True
-			print("wesh")
 		if button == arcade.MOUSE_BUTTON_RIGHT:
-			print("wesh")
 			self.visible = True
 
 	def on_mouse_release(self, x: float, y: float, button: int, modifiers: int) -> None:
@@ -57,9 +55,8 @@ class Weapon(arcade.Sprite):
 	def on_mouse_motion(self, x: float, y: float, dx: int, dy: int) -> None:
 		self._mouse_screen = (x, y)
 
-		# ──────────────────────────────────────────────────────────────────────
-	# 1)  Aim: compute the sprite angle from hand → cursor
-	# ──────────────────────────────────────────────────────────────────────
+
+	# 1)  Aim: compute the sprite angle from hand → cursor to make more sense and give a direction that will be used in many cases (sword, bow and arrow)
 	def update_angle(
 		self,
 		camera: arcade.Camera2D,
@@ -69,13 +66,13 @@ class Weapon(arcade.Sprite):
 
 		cursor_x, cursor_y,_ = camera.unproject(self._mouse_screen)
 		cursor_x_proj= self._mouse_screen[0]
-		#print(f"Cursor position: {cursor_x}, {cursor_y}")
+
 		if cursor_x_proj > 640:
 			hand_x = player.center_x + self._hand_offset[0]
 		else:
 			hand_x = player.center_x - self._hand_offset[0]
 		hand_y = player.center_y + self._hand_offset[1]
-		#print(f"Hand position: {hand_x}, {hand_y}")
+
 
 		dx, dy = cursor_x - hand_x, cursor_y - hand_y
 		self.angle = -math.degrees(math.atan2(dy,dx)) +self._angle_offset
@@ -89,7 +86,7 @@ class Weapon(arcade.Sprite):
 		
 		θ = math.radians(self.angle)
 		cos_θ, sin_θ = math.cos(θ), math.sin(θ)
-		# ------- rotation inversée (sens horaire) ------------------------
+		# ------- rotation inversée dans le sens horaire ------------------------
 		dx =  self._chi[0] * cos_θ + self._chi[1] * sin_θ
 		dy = -self._chi[0] * sin_θ + self._chi[1] * cos_θ
 		# -----------------------------------------------------------------
@@ -104,9 +101,8 @@ class Weapon(arcade.Sprite):
 
 	
 	
-	# ──────────────────────────────────────────────────────────────────────
 	# 3)  Frame-level update helper
-	# ──────────────────────────────────────────────────────────────────────
+
 	def updating(self, player: Player,camera:arcade.Camera2D) -> None:
 		"""Call once per frame from your GameView.on_update()."""
 		if self.visible:

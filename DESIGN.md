@@ -64,6 +64,15 @@ Simples `arcade.Sprite` gérant leur état (ouvert/fermé) ; un `Switch` référ
   * Le code consommateur applique seulement les opérations offertes par la **classe de base** (`Sprite`) ; il n’a pas à distinguer la sous-classe précise.  
 * **`platform_build`** et **`map_loader`** restent fonctionnels : ils génèrent les instances concrètes mais ne participent pas eux-mêmes à la hiérarchie.
 
+## EXTENSIONS :
+### Ajout d'un système de vie
+Nous ne voulions pas que notre héro meurt instantanément au contact d'ennemis, nous voulions que ça soit un combat qui puisse durer, nous avons donc donné un attribut vie aux monstres et à notre joueur. 
+### Redesign
+Nous avons aussi designé une barre de vie au dessus de sa tête.
+La plus grande extension se situait dans le redesign des sprites et des interactions avec les objets que nous avions incorporé. 
+Rémi et Noah souhaitaient que l’aspect visuel du jeu se distingue, et ont tout repensé manuellement. Nous avons d’abord réalisé des croquis sur Procreate par Rémi, puis Noah a affiné les designs sous Photoshop, en utilisant son filtre « Pixeliser » très efficace pour obtenir le rendu voulu. Aucune IA n’a été utilisée pour créer les images, mais il est important de préciser que Photoshop intègre désormais des fonctionnalités d’IA ; nous ne pouvons donc pas affirmer qu’il soit totalement dépourvu d’IA (même si nous doutons fort que l’outil pinceau de Photoshop ou le filtre Pixeliser fassent appel à de l’IA, nous tenions à être entièrement transparents, compte tenu de la politique « zéro IA » du cours).
+
+
 ---
 
 ## 7. Diagramme d’héritage

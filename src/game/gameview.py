@@ -50,7 +50,8 @@ class GameView(arcade.View):
 		self.switch:        Switch
 		self.score: int = 0
 
-		# physics & weapons
+
+		# physics & weapons + scoew
 		self.physics_engine: Optional[arcade.PhysicsEnginePlatformer] = None
 		self.sword :  Sword
 		self.bow   :  Bow
@@ -181,7 +182,7 @@ class GameView(arcade.View):
 				self.player_sprite.take_damage(20)
 				self.player_sprite.invincible = True
 				direction = self.player_sprite.center_x > monster.center_x
-				self.player_sprite.knockback(2700, delta_time, direction)
+				self.player_sprite.knockback(1000, delta_time, direction)
 				return
 
 		# ---- sword logic & damage ----
@@ -300,3 +301,12 @@ class GameView(arcade.View):
 
 			self.weaponss.draw()
 			self.bow.arrows.draw()
+		arcade.draw_text(
+		f"Score : {self.score}",
+		100,                               
+		self.window.height - 20,        
+		arcade.color.WHITE,
+		font_size=20,
+		anchor_x="left",
+		anchor_y="top",
+    )
