@@ -7,6 +7,7 @@ from src.entities.base_entity import Enemy     # path of your new file
 from src.map_builder.platforms import Platform
 from src.game.player import Player
 from src.texture_manager import *
+#from src.map_builder.switch import Gate, Switch
 class GameView(arcade.View):
 	"""Main in-game view."""
 
@@ -14,6 +15,7 @@ class GameView(arcade.View):
 
 	def __init__(self) -> None:
 		super().__init__()
+		self.camera: arcade.Camera2D = arcade.camera.Camera2D()
 		self.background = get_texture_path(BACKGROUND_TEXTURE)
 		self.background_color = arcade.color.BLACK
 
@@ -22,8 +24,7 @@ class GameView(arcade.View):
 		self.wall_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
 		self.coin_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
 		self.monster_list: arcade.SpriteList[Enemy] = arcade.SpriteList()
-
-		self.test:arcade.SpriteList[arcade.Sprite | Platform]= arcade.SpriteList()
+		self.platforms: arcade.SpriteList[Platform] = arcade.SpriteList(use_spatial_hash=True)
 
 		self.death_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
 		self.exit_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
@@ -31,9 +32,11 @@ class GameView(arcade.View):
 		self.player_sprite: Player
 		self.initial_x: float = 0.0
 		self.initial_y: float = 0.0
+		#self.gates: arcade.SpriteList[Gate] = arcade.SpriteList()
+		#self.switches: arcade.SpriteList[Switch] = arcade.SpriteList()
 	
 		self.physics_engine: Optional[arcade.PhysicsEnginePlatformer] = None
-		self.camera: arcade.Camera2D = arcade.camera.Camera2D()
+
 
 
 		self.game_over_sound: arcade.Sound = arcade.load_sound(":resources:sounds/gameover1.wav")
@@ -50,6 +53,7 @@ class GameView(arcade.View):
 	def setup(self, map_filename: str) -> None:
 		self.map= LevelBuilder().build_level(map_filename)
 		new_map = self.map
+
 		self.wall_list    = new_map["walls"]
 		self.coin_list    = new_map["coins"]
 		self.monster_list = new_map["monsters"]
@@ -57,27 +61,16 @@ class GameView(arcade.View):
 		self.exit_list    = new_map["exit"]
 		self.player_sprite_list = new_map["player"]
 		self.platforms = new_map["platforms"]
-
-		"""""
-		no= Platform(":resources:images/tiles/boxCrate_double.png",
-						  start_pos=(500, 100), axis="x", direction=False,
-						  boundary_a=100, boundary_b=501)
-		"""
-	
-
-		#self.test.append(yes)
-		#self.test.append(no)
+		#self.gates = new_map["gates"]
+		#self.switches = new_map["switches"]
+		# Create some test platforms
+		
+		self.wall_list.extend(self.platforms)
 
 		self.player_sprite = self.player_sprite_list[0]
 		self.initial_x     = self.player_sprite.center_x
 		self.initial_y     = self.player_sprite.center_y
 		print("health", self.player_sprite.current_health)
-		#self.platforms : arcade.SpriteList[arcade.Sprite]=arcade.SpriteList()
-
-		#self.platforms = arcade.SpriteList(use_spatial_hash=True)
-
-		#self.platforms = new_map["platforms"]
-
 		#self.sword.environment(self.monster_list)
 		self.physics_engine = arcade.PhysicsEnginePlatformer(
 			player_sprite=self.player_sprite,
@@ -153,8 +146,7 @@ class GameView(arcade.View):
 		# Physics step
 		if self.physics_engine is not None:
 			self.physics_engine.update()
-		# Update moving platforms with delta_time
-			#self.platforms.update(delta_time)  ATTENTION NE FAIT BUGGER LE PERSONNAGE
+		# Update moving platforms with delta_time 
 		# Monster AI and collision
 		for monster in self.monster_list:
 			monster.update(delta_time)

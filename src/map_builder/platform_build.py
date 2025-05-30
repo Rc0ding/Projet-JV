@@ -5,13 +5,11 @@ Build MovingPlatform sprites for one level without external helpers.
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple, Generator
+from typing import Dict, List, Tuple, Generator, Any
 
 from src.map_builder.platforms import Platform
-
 from src.helper import grid_to_world, grid_row
 
-Meta = Dict[str, float | int | List[str]]
 
 # ──────────────────────────────────────────────────────────────
 # ASCII glyph sets (leave as is)
@@ -29,7 +27,7 @@ ARROWS_V = {"↑", "↓"}
 # ──────────────────────────────────────────────────────────────
 def build_platforms(
     rows: List[str],
-    meta: Dict[str, int],
+    meta: dict[str, Any],
     tile_textures: Dict[str, str],
 ) -> List[Platform]:
     """
@@ -49,10 +47,9 @@ def build_platforms(
     width = meta["width"]
     print("Building platforms from rows:", meta_with_rows)
     print("Unique chars in rows:", sorted({c for line in rows for c in line}))
-    # Remove the first element from meta_with_rows (possibly header/meta info).
-    meta_with_rows.pop(0)
+
     # Label connected blocks of eligible characters.
-    blocks = _label_blocks(meta_with_rows)
+    blocks = _label_blocks(meta_with_rows, width)
     print(f"Blocks found: {blocks}")
     # Extract arrow series for horizontal and vertical directions.
     series_h, series_v = _collect_arrow_series(meta_with_rows, width)
@@ -151,8 +148,8 @@ SeriesH = Dict[Tuple[int, Tuple[int, int]], int]
 SeriesV = Dict[Tuple[int, Tuple[int, int]], int]
 
 
-def _label_blocks(rows: List[str]) -> Dict[int, List[GridPos]]:
-    h, w = len(rows), len(rows[0])
+def _label_blocks(rows: List[str], width: int) -> Dict[int, List[GridPos]]:
+    h, w = len(rows), width
     seen: list[list[bool]] = [[False] * w for _ in range(h)]
     blocks: Dict[int, list[GridPos]] = {}
     current = 0

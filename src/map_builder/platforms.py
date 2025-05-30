@@ -12,12 +12,16 @@ class Platform(arcade.Sprite):
                          center_x=start_pos[0], center_y=start_pos[1])
         self.axis = axis              # "x" or "y"
         self.direction = direction        # True = +dir, False = −dir
-        self.boundary_left = boundary_a  # world coords  (min on that axis)
-        self.boundary_right = boundary_b  # world coords  (max on that axis)
         if self.axis == "x":
             self.change_x = self.SPEED_PX_PER_FRAME if direction else -self.SPEED_PX_PER_FRAME
+            self.change_y = 0
+            self.boundary_left = boundary_a  # world coords  (min on that axis)
+            self.boundary_right = boundary_b  # world coords  (max on that axis)
         elif self.axis == "y":
             self.change_y = self.SPEED_PX_PER_FRAME if direction else -self.SPEED_PX_PER_FRAME
+            self.change_x = 0
+            self.boundary_top = boundary_a  # world coords  (min on that axis)
+            self.boundary_bottom = boundary_b  # world coords  (max on that axis)
         else: raise ValueError("Axis must be 'x' or 'y'.")
 
         

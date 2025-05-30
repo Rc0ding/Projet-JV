@@ -1,48 +1,55 @@
+from __future__ import annotations
+
+"""MapLoader – reads a level text file consisting of a YAML header followed by
+an ASCII grid, separated by a line containing only "---".
+
+It returns a `Map.Metadata` instance – **exactly the nested class the engine
+already defines** – plus the rectangular list of grid rows.
+"""
 from pathlib import Path
-from typing import List
+from typing import Any, Dict
 
-Meta = dict[str,int]
+import yaml
+
+# ────────────────────────────────────────────────────────────
+#  Canonical Map / Metadata model supplied by the user
+# ────────────────────────────────────────────────────────────
 
 
+
+# ────────────────────────────────────────────────────────────
+#  Loader
+# ────────────────────────────────────────────────────────────
 
 class MapLoader:
+    """Read <header YAML> --- <ASCII grid> and return (`Meta`, rows)."""
 
-	def __init__(self, filename: str):
-		self.path = Path(filename)
+    def __init__(self, filename: str | Path):
+        self.path = Path(filename)
 
+    # public --------------------------------------------------
+    def load(self) -> tuple[Dict[str, Any], list[str]]:
+        if not self.path.exists():
+            raise FileNotFoundError(self.path)
 
-	def load(self) -> tuple[Meta, List[str]]:
-		"""Return (meta, rows) where rows is top-to-bottom."""
-		if not self.path.exists():
-			raise FileNotFoundError(self.path)
+        header_str, ascii_block = self.path.read_text(encoding="utf-8").split("---", 1)
 
-		with self.path.open(encoding="utf-8") as f:
-			header, ascii_block = f.read().split("---", 1)
+        meta = self._parse_header(header_str)
 
-		meta: Meta = self._parse_header(header.splitlines())
-		rows: List[str] = [line.rstrip("\n") for line in ascii_block.splitlines()]
-		
-		rows.pop()
+        rows: list[str] = [
+            line.rstrip("\n").ljust(meta["width"], " ")
+            for line in ascii_block.splitlines()
+        ]
+        if rows and rows[-1].isspace():
+            rows.pop()
 
-		if len(rows) != meta["height"] or max(len(row) for row in rows) > meta["width"]:
-			raise ValueError("YAML height and grid height differ")
-		print(f"MapLoader: {self.path} loaded with {meta['width']}x{meta['height']} grid")
-		return meta, rows
+        if len(rows) < meta["height"] or any(len(row) > meta["width"] for row in rows):
+            print(f"YAML: {meta['height']} rows, grid: {len(rows)} rows, width: {meta['width']}")
+            raise ValueError("YAML height and grid height differ")
 
+        return meta, rows
 
-	def _parse_header(self,lines: List[str]) -> Meta:
-		meta: Meta = {"width": 0, "height": 1}
-		for line in lines:
-
-			if ":" not in line: # verify that line contains a key-value pair
-				continue
-			
-			key, value = (part.strip() for part in line.split(":", 1))
-			match key:                       # pattern matching is on syllabus
-				case "width"  | "height":
-					print(f"Parsing {key}={value}")
-					meta[key] += int(value)
-				case _:
-					pass
-		
-		return meta
+    # private -------------------------------------------------
+    def _parse_header(self, header: str) -> Dict[str, Any]:
+        """Return the YAML header as an ordinary dict."""
+        return yaml.safe_load(header) or {}

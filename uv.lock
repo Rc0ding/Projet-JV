@@ -146,6 +146,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "arcade" },
     { name = "mypy" },
+    { name = "types-pyyaml" },
 ]
 
 [package.dev-dependencies]
@@ -158,6 +159,7 @@ dev = [
 requires-dist = [
     { name = "arcade", specifier = ">=3.0.2" },
     { name = "mypy", specifier = ">=1.15.0" },
+    { name = "types-pyyaml", specifier = ">=6.0.12.20250516" },
 ]
 
 [package.metadata.requires-dev]
@@ -229,6 +231,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/79/62/0d8a2220ee0747522f3b73e4f38bea7c78aefdf707afb86decf26f799fc5/pytiled_parser-2.2.9.tar.gz", hash = "sha256:225269fdd37afcbcd3b76ea3e2cab6b1e742387027106055990db43fd7451ebd", size = 45958 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d7/f7/6b6c51b50ed8681a31146e5e7ac325b78fe776ff48b1ec8f56d7e4995d72/pytiled_parser-2.2.9-py2.py3-none-any.whl", hash = "sha256:37f73d31950bf4d02ee3bda59f3d6123c55194dc8d8e876821dd2080af5f1f91", size = 44452 },
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20250516"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4e/22/59e2aeb48ceeee1f7cd4537db9568df80d62bdb44a7f9e743502ea8aab9c/types_pyyaml-6.0.12.20250516.tar.gz", hash = "sha256:9f21a70216fc0fa1b216a8176db5f9e0af6eb35d2f2932acb87689d03a5bf6ba", size = 17378 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/5f/e0af6f7f6a260d9af67e1db4f54d732abad514252a7a378a6c4d17dd1036/types_pyyaml-6.0.12.20250516-py3-none-any.whl", hash = "sha256:8478208feaeb53a34cb5d970c56a7cd76b72659442e733e268a94dc72b2d0530", size = 20312 },
 ]
 
 [[package]]
