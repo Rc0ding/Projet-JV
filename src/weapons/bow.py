@@ -14,7 +14,7 @@ Key fixes
   release – no more drifting offsets.
 """
 
-from typing import Tuple, An
+from typing import Tuple
 import math
 import arcade
 
@@ -68,16 +68,10 @@ class Bow(Weapon):
             # Check collisions with walls
             
         
-        def death(self, wall_list):
+        def death(self)-> None:
             if self.center_x<-100:
                 self.remove_from_sprite_lists()
-            wall_hit = arcade.check_for_collision_with_list(self, wall_list)
-            if wall_hit:
-                self.remove_from_sprite_lists()
-                return
 
-            if self._life <= 0:
-                self.remove_from_sprite_lists()
             
 
 
@@ -93,7 +87,7 @@ class Bow(Weapon):
                          hand_offset=(20, -14),
                          scale=0.35)
         self._player = player
-        self._wall_list
+        #self._wall_list = arcade.SpriteList()
         self._cooldown = 0.0
         self.arrows: arcade.SpriteList[Bow.Arrow] = arcade.SpriteList(use_spatial_hash=True)
 
@@ -135,14 +129,15 @@ class Bow(Weapon):
         dir_vec = arcade.Vec2(cursor_wx - self.center_x, cursor_wy - self.center_y)
 
 
-        if dir_vec.length == 0:
+        if dir_vec.length() == 0:
             dir_vec = arcade.Vec2(1, 0)
 
         start_pos = (self.center_x, self.center_y)
         arrow = Bow.Arrow(start_pos, dir_vec, self.angle)
         self.arrows.append(arrow)
-
+    
+    """
     def setup_collision_lists(self, wall_list: arcade.SpriteList[arcade.SpriteList]):
-        """Set up collision lists for the arrow"""
-        self._wall_list = wall_list
+        Set up collision lists for the arrow
+        self._wall_list = wall_list"""
 
