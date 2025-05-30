@@ -6,18 +6,18 @@ from src.weapons.sword import Sword
 from src.entities.base_entity import Enemy     # path of your new file
 from src.map_builder.platforms import Platform
 from src.game.player import Player
-
+from src.texture_manager import *
 class GameView(arcade.View):
 	"""Main in-game view."""
 
-	PLAYER_MOVEMENT_SPEED: int = 5
+	PLAYER_MOVEMENT_SPEED: int = 10
 
 	def __init__(self) -> None:
 		super().__init__()
-		self.background_color = arcade.csscolor.CORNFLOWER_BLUE
+		self.background = get_texture_path(BACKGROUND_TEXTURE)
+		self.background_color = arcade.color.BLACK
 
 		self.map_name: str = "maps/map2.txt"
-
 		# Dummy defaults for mypy
 		self.wall_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
 		self.coin_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
@@ -103,7 +103,7 @@ class GameView(arcade.View):
 				self.player_sprite.change_x = -self.PLAYER_MOVEMENT_SPEED
 			case arcade.key.UP:
 				if self.player_sprite.change_y == 0:
-					self.player_sprite.change_y = +40
+					self.player_sprite.change_y = +20
 			case arcade.key.SPACE:
 				self.player_sprite.change_x = 0
 				self.player_sprite.change_y = 0
@@ -164,9 +164,10 @@ class GameView(arcade.View):
 			if arcade.check_for_collision(self.player_sprite, monster):
 				self.player_sprite.take_damage(20)
 				self.player_sprite.invincible = True
-				self.player_sprite.knockback(1700,delta_time)
+				direction: bool = self.player_sprite.center_x > monster.center_x
+				self.player_sprite.knockback(2700,delta_time, direction)
 				return
-		self.sword.updating(self.player_sprite)
+		self.sword.updating(self.player_sprite, self.camera)
 		"""
 		for monster in self.sword.killing():
 		   monster.remove_from_sprite_lists()"""
@@ -184,7 +185,7 @@ class GameView(arcade.View):
 
 
 		# Death or exit → reset or next level
-		if arcade.check_for_collision_with_list(self.player_sprite, self.death_list) or self.player_sprite.current_health <= 0:
+		if arcade.check_for_collision_with_list(self.player_sprite, self.death_list) or self.player_sprite.current_health <= 0 or self.player_sprite.center_y < -300:
 			self.player_sprite.change_x = 0
 			self.player_sprite.change_y = 0
 			self.setup(self.map_name)
@@ -200,6 +201,10 @@ class GameView(arcade.View):
 
 	def on_draw(self) -> None:
 		self.clear()
+		arcade.draw_texture_rect(
+            	self.background,
+            	arcade.LBWH(0, 0, 1280, 720),
+        	)
 		with self.camera.activate():
 			arcade.draw_sprite(self.player_sprite)
 			self.wall_list.draw()

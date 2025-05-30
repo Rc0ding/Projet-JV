@@ -3,9 +3,10 @@ from src.entities import base_entity
 import math
 from typing import Tuple
 import random
+from src.texture_manager import BAT_TEXTURE
 
 class Bat(base_entity.Enemy):
-    TEXTURE: str = "ressources/bat.png"
+    TEXTURE: str = BAT_TEXTURE
 
     def __init__(
         self,

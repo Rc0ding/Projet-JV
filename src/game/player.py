@@ -1,4 +1,4 @@
-
+from src.texture_manager import PLAYER_TEXTURE
 from src.game.objects import Object
 
 class Player(Object):
@@ -15,7 +15,7 @@ class Player(Object):
 	def __init__(self, scale:float=0.5, pos_x:float=0, pos_y:float=0) -> None:
 
 		super().__init__(
-			texture=":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png",
+			texture=PLAYER_TEXTURE,
 			scale=scale,
 			pos=(pos_x,pos_y),
 			health=100           # stays inside GameObject, never reaches Sprite
@@ -23,16 +23,19 @@ class Player(Object):
 
 		#self.__buffered_jump_timer: float = 0
 	
-	def knockback(self, distance:float,delta_time:float) -> None:
+	def knockback(self, distance:float,delta_time:float,direction:bool) -> None:
 		"""Apply knockback to the object."""
-		self.center_x += distance * delta_time
+		if direction:
+			self.center_x += distance * delta_time
+		else:
+			self.center_x -= distance * delta_time
+		self.change_x=0
+		self.change_y=0
 		self.center_y += distance * delta_time
 		
-		distance= distance * 0.8
-		if distance< 0.1:
+		distance= distance * 0.9
+		if distance< 0.01:
 			distance=0
-		# To prevent sliding, you should implement ground friction in the update method
-		# For example: if on_ground: self.change_x *= 0.9  # Friction coefficient
 
 		print(f"Knockback applied: change_x={self.change_x}, change_y={self.change_y}")
 	

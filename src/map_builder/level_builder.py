@@ -10,6 +10,7 @@ from src import helper
 from src.map_builder.platform_build import build_platforms
 from src.map_builder.platforms import Platform
 from src.game.player import Player
+from src.texture_manager import *
 #from src.map_builder.gates import Gate
 #from src.map_builder.switch import Switch
 #from src.helper import grid_to_world
@@ -79,7 +80,7 @@ class LevelBuilder:
 						continue                           # next grid-cell
 					case 'E':
 						exit_sprite = arcade.Sprite(
-							":resources:images/tiles/signExit.png",
+							PORTAL_TEXTURE,
 							scale=constants_proj.SCALE_FACTOR
 						)
 						exit_sprite.center_x = x

@@ -24,10 +24,7 @@ class MapLoader:
 		
 		rows.pop()
 
-		if len(rows) != meta["height"]:
-			print(f"YAML height: {meta['height']}, grid height: {len(rows)}")
-			for i in range(len(rows)):
-				print(rows[i])
+		if len(rows) != meta["height"] or max(len(row) for row in rows) > meta["width"]:
 			raise ValueError("YAML height and grid height differ")
 		print(f"MapLoader: {self.path} loaded with {meta['width']}x{meta['height']} grid")
 		return meta, rows

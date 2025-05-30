@@ -1,0 +1,127 @@
+width: 180
+height: 27
+switches:
+  - x: 64
+    y: 3
+    state: off
+    switch_off:
+      - action: open-gate
+        x: 47
+        y: 4
+      - action: open-gate
+        x: 48
+        y: 4
+      - action: open-gate
+        x: 49
+        y: 4
+      - action: open-gate
+        x: 50
+        y: 4
+      - action: open-gate
+        x: 51
+        y: 4
+      - action: open-gate
+        x: 52
+        y: 4
+      - action: open-gate
+        x: 53
+        y: 4
+      - action: open-gate
+        x: 54
+        y: 4
+    switch_on:
+      - action: close-gate
+        x: 47
+        y: 4
+      - action: close-gate
+        x: 48
+        y: 4
+      - action: close-gate
+        x: 49
+        y: 4
+      - action: close-gate
+        x: 50
+        y: 4
+      - action: close-gate
+        x: 51
+        y: 4
+      - action: close-gate
+        x: 52
+        y: 4
+      - action: close-gate
+        x: 53
+        y: 4
+      - action: close-gate
+        x: 54
+        y: 4
+  - x: 47
+    y: 7
+    state: off
+    switch_off:
+      - action: open-gate
+        x: 52
+        y: 7
+      - action: open-gate
+        x: 53
+        y: 8
+      - action: open-gate
+        x: 54
+        y: 9
+    switch_on:
+      - action: close-gate
+        x: 52
+        y: 7
+      - action: close-gate
+        x: 53
+        y: 8
+      - action: close-gate
+        x: 54
+        y: 9
+gates :
+  - x: 52
+    y: 7
+    state: open
+  - x: 53
+    y: 8
+    state: open
+  - x: 54
+    y: 9
+    state: open
+  - x: 47
+    y: 4
+    state: open
+  - x: 48
+    y: 4
+    state: open
+  - x: 49
+    y: 4
+    state: open
+  - x: 50
+    y: 4
+    state: open
+  - x: 51
+    y: 4
+    state: open
+  - x: 52
+    y: 4
+    state: open
+  - x: 53
+    y: 4
+    state: open
+  - x: 54
+    y: 4
+    state: open
+next_map: map10.txt #  ← ↓ ↑ →
+---
+                                                *      =====        Exx=
+                                            T         |££££=============
+                                              ===x   | £££££££££££££££££
+        S    =====    o   = *    W         =££=^*=x*|  =££££££££££££££££
+       ---   =****   =x   =£=        w   **===== -==   -========££££££££
+             =****   ==   === ====→→→→→→→→→→→→         ********x=£££££££
+=====→→→→→→→→→→→→→→→→→→→→→→→→             xxxxx||||||||====****x =££££££
+     ££££££££££££££££££££££££££££££££££££££££££££££££££££££=***x^=££££££
+££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££=*xx=£££££££
+£££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££===££££££££
+££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
+---

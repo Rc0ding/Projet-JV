@@ -1,0 +1,138 @@
+width: 27
+height: 35
+switches:
+  - x: 3
+    y: 2
+    state: on
+    switch_off:
+      - action: open-gate
+        x: 23
+        y: 8
+      - action: open-gate
+        x: 23
+        y: 9
+      - action: open-gate
+        x: 24
+        y: 8
+      - action: open-gate
+        x: 24
+        y: 9
+    switch_on:
+      - action: close-gate
+        x: 23
+        y: 8
+      - action: close-gate
+        x: 23
+        y: 9
+      - action: close-gate
+        x: 24
+        y: 8
+      - action: close-gate
+        x: 24
+        y: 9
+  - x: 1
+    y: 14
+    state: on
+    switch_off:
+      - action: open-gate
+        x: 11
+        y: 16
+      - action: open-gate
+        x: 11
+        y: 17
+    switch_on:
+      - action: close-gate
+        x: 11
+        y: 16
+      - action: close-gate
+        x: 11
+        y: 17
+  - x: 24
+    y: 23
+    state: on
+    switch_off:
+      - action: open-gate
+        x: 2
+        y: 23
+      - action: open-gate
+        x: 3
+        y: 23
+      - action: open-gate
+        x: 2
+        y: 24
+      - action: open-gate
+        x: 3
+        y: 24
+    switch_on:
+      - action: close-gate
+        x: 2
+        y: 23
+      - action: close-gate
+        x: 3
+        y: 23
+      - action: close-gate
+        x: 2
+        y: 24
+      - action: close-gate
+        x: 3
+        y: 24
+gates :
+  - x: 23
+    y: 8
+    state: closed
+  - x: 23
+    y: 9
+    state: closed
+  - x: 24
+    y: 8
+    state: closed 
+  - x: 24
+    y: 9
+    state: closed
+  - x: 11
+    y: 16
+    state: closed
+  - x: 11
+    y: 17
+    state: closed
+  - x: 2
+    y: 23
+    state: closed
+  - x: 2
+    y: 24
+    state: closed
+  - x: 3
+    y: 23
+    state: closed
+  - x: 
+    y: 24
+    state: closed
+next_map: map9.txt # → ← ↓ ↑ 
+---
+E
+==||x££££££££££££££££££££==
+==||----------£-£-=---- ^==
+==            £ =    *  -==
+==            =    * =   ==
+==←==←←←=→       * = £   ==
+==   £££ £=  = x = £ £   ==
+==££££=£££= =====£*£*£=====
+===========|=====£=£=£=====
+===========|===============
+=-  ↑   ↑ = =     ↑      ==
+=^  £ £ £ = =  ↑  =      ==
+==  £ £ £      =  =       =
+==  £ £ £ ←===→=  =       =
+==  £ - £      =  ↓      ==
+==x - ↓ -  o   ↓  x£=    ==
+====*===*==============||==
+=======================||==
+==                       ==
+==  w  o                 ==
+==    ==     0           ==
+==     =* o ==*          ==
+==     =*==* =*   =      ==
+== ^   = =   =  = ==   S ==
+==£=£££=£=£££=££=£===    ==
+===========================
+---
