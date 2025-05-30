@@ -14,7 +14,7 @@ Key fixes
   release – no more drifting offsets.
 """
 
-from typing import Tuple
+from typing import Tuple, Any
 import math
 import arcade
 
@@ -68,10 +68,9 @@ class Bow(Weapon):
             # Check collisions with walls
             
         
-        def death(self)-> None:
-            if self.center_x<-100:
+        def death(self):
+            if self.center_y<-100:
                 self.remove_from_sprite_lists()
-
             
 
 
@@ -87,7 +86,7 @@ class Bow(Weapon):
                          hand_offset=(20, -14),
                          scale=0.35)
         self._player = player
-        #self._wall_list = arcade.SpriteList()
+      
         self._cooldown = 0.0
         self.arrows: arcade.SpriteList[Bow.Arrow] = arcade.SpriteList(use_spatial_hash=True)
 
@@ -135,9 +134,4 @@ class Bow(Weapon):
         start_pos = (self.center_x, self.center_y)
         arrow = Bow.Arrow(start_pos, dir_vec, self.angle)
         self.arrows.append(arrow)
-    
-    """
-    def setup_collision_lists(self, wall_list: arcade.SpriteList[arcade.SpriteList]):
-        Set up collision lists for the arrow
-        self._wall_list = wall_list"""
 

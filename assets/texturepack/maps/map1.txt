@@ -1,0 +1,50 @@
+width: 24
+height: 10
+switches:
+  - x: 0
+    y: 7
+    # this switch is off by default (no 'state')
+    # it opens the gate at position (6, 1), then disables itself
+    # (that means we won't be able to switch it back off, so nothing to do there)
+    switch_on:
+      - action: open-gate
+        x: 6
+        y: 1
+      - action: disable
+  - x: 8
+    y: 6
+    state: on # this switch is on by default
+    # when we turn it off, we open access to the coin,
+    # but we close access to the exit
+    switch_off:
+      - action: open-gate
+        x: 14
+        y: 2
+      - action: close-gate
+        x: 18
+        y: 5
+    # when we turn it back on, we do the opposite
+    switch_on:
+      - action: close-gate
+        x: 14
+        y: 2
+      - action: open-gate
+        x: 18
+        y: 5
+gates:
+  - x: 18
+    y: 5
+    state: open # this gate is open when the game starts
+  # the other gates start closed
+next_map: map10.txt # → ← ↓ ↑
+---
+
+^E   ←x→
+--    xx^x
+    o x-----     o|
+   ---          ===
+S  E   -----  ←=
+---  £       E|   =
+    = |  =  *-    =££
+  ←===         =£££ 
+---

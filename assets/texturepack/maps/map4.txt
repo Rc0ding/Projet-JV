@@ -1,0 +1,36 @@
+width: 65
+height: 20
+switches:
+  - x: 0
+    y: 19
+    # this switch is off by default (no 'state')
+    # it opens the gate at position (6, 1), then disables itself
+    # (that means we won't be able to switch it back off, so nothing to do there)
+    switch_on:
+      - action: open-gate
+        x: 16
+        y: 2
+      - action: disable
+next_map: map1.txt    # → ← ↓ ↑ 
+---
+^   w        w  =
+-       w   ↑   =
+   w       w↑   =
+    ←←←-→   ↑   =
+     w    w ↑   =
+  w         ↑w  =
+        w  -#   =
+   w        w ===
+ w      w    ---=
+       ----   * =
+    w     w o o*=
+w o  ---      ===
+  -   * w    w  =
+      -         =
+  --  w    w* * =
+  w   o  w  -w- =
+     ---  w     ======
+   w        -   |  * =
+ S     o --  o  =x* E=
+======£=£££===========
+---

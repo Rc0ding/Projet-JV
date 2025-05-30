@@ -90,6 +90,7 @@ class GameView(arcade.View):
 		self.bow= Bow(self.player_sprite, self.camera)
 		self.current_weapon = self.sword
 		self.weaponss= arcade.SpriteList(use_spatial_hash=True)
+	
 		self.weaponss.append(self.sword)
 		self.weaponss.append(self.bow)
 		self.camera = arcade.camera.Camera2D()
