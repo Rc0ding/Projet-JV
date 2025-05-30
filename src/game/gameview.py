@@ -2,7 +2,8 @@ from __future__ import annotations
 import arcade
 from typing import  List, Optional
 from src.map_builder.level_builder import LevelBuilder
-from src.weapons.sword import Sword          
+from src.weapons.sword import Sword      
+from src.weapons.bow import Bow    
 from src.entities.base_entity import Enemy     # path of your new file
 from src.map_builder.platforms import Platform
 from src.game.player import Player
@@ -10,6 +11,8 @@ from src.texture_manager import *
 #from src.map_builder.switch import Gate, Switch
 class GameView(arcade.View):
 	"""Main in-game view."""
+
+
 
 	PLAYER_MOVEMENT_SPEED: int = 10
 
@@ -65,6 +68,7 @@ class GameView(arcade.View):
 		#self.switches = new_map["switches"]
 		# Create some test platforms
 		
+
 		self.wall_list.extend(self.platforms)
 
 		self.player_sprite = self.player_sprite_list[0]
@@ -79,8 +83,12 @@ class GameView(arcade.View):
 			gravity_constant=1,
 		)
 		self.sword= Sword(self.player_sprite, self.camera)
+		self.bow= Bow(self.player_sprite, self.camera)
+		self.current_weapon = self.sword
 		self.weaponss= arcade.SpriteList(use_spatial_hash=True)
+		self.bow.setup_collision_lists(self.wall_list,self.platforms,self.death_list,self.gates)
 		self.weaponss.append(self.sword)
+		self.weaponss.append(self.bow)
 		self.camera = arcade.camera.Camera2D()
 
 		 
@@ -132,14 +140,20 @@ class GameView(arcade.View):
 	
 	def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> None:
 		if button == arcade.MOUSE_BUTTON_LEFT:
-			self.sword.visible = True
-			self.sword.on_mouse_press(x, y, button, modifiers)
+			self.current_weapon.visible = True
+			self.current_weapon.on_mouse_press(x,y,button,modifiers)
+		elif button == arcade.MOUSE_BUTTON_RIGHT:
+			self.current_weapon.visible = False         # we hide the old one
+			self.current_weapon = self.bow if self.current_weapon is self.sword else self.sword #we switch to the one that wasnt visible
+
 	def on_mouse_release(self, x: float, y: float, button: int, modifiers: int) -> None:
 		if button == arcade.MOUSE_BUTTON_LEFT:
-			self.sword.visible = False
+			self.current_weapon.visible = False
+			self.current_weapon.on_mouse_release(x, y, button, modifiers)
 			self.sword.on_mouse_release(x, y, button, modifiers)
+
 	def on_mouse_motion(self, x: float, y: float, dx: int, dy: int) -> None:
-		self.sword.on_mouse_motion(x, y, dx, dy)
+		self.current_weapon.on_mouse_motion(x, y, dx, dy)
 
 	def on_update(self, delta_time: float) -> None:
 	
@@ -160,6 +174,7 @@ class GameView(arcade.View):
 				self.player_sprite.knockback(2700,delta_time, direction)
 				return
 		self.sword.updating(self.player_sprite, self.camera)
+		self.bow.updating  (self.player_sprite, self.camera)   # WE HAD A LOT OF ISSUES : since arrow is defined in bow, we need to keep updating the arrows for them to fly even if we switch to sword midair
 		"""
 		for monster in self.sword.killing():
 		   monster.remove_from_sprite_lists()"""
@@ -208,9 +223,10 @@ class GameView(arcade.View):
 			self.player_sprite.draw_health_bar()
 			for monster in self.monster_list:
 				monster.draw_health_bar()
-			if self.sword.visible:
-			    self.weaponss.draw()
+			self.weaponss.draw()          # both sword & bow sprites
+			self.bow.arrows.draw()        # the flying projectiles
 		
+			
 		
 
 
