@@ -126,6 +126,7 @@ def build_platforms(
                 b = g_bottom - (block_max - row)
                 b_top, b_bottom = grid_row(a, b)
                 wx, wy = grid_to_world(col, length - row - 1)
+                print("Unknown map char:", repr(rows[row][col]))
                 sprites.append(
                     Platform(
                         texture=tile_textures[rows[row][col]],

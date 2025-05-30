@@ -1,6 +1,4 @@
 import arcade
-from typing import Tuple
-import math
 from src.entities.base_entity import Enemy
 from src.game.player import Player
 from src.texture_manager import SWORD_TEXTURE
@@ -21,21 +19,21 @@ class Sword(Weapon):
 			pivot_raw=(35, 32),       # handle pixel in the image
 			angle_offset= 42.8,       # adjust so 0° → right
 			hand_offset=(20, -14),     # hand offset from player center
-			scale=0.35,
+			scale=0.5,
 		)
+		self.DAMAGE: int = 25           # points removed on hit
+		self.COOLDOWN: float = 0.5    # seconds between two hits
+		self._cooldown_timer: float = 0
+
+	def ready(self) -> bool:
+		return self._cooldown_timer <= 0 and self.visible
+
+	def update_cooldown(self, dt: float) -> None:
+		self._cooldown_timer = max(0, self._cooldown_timer - dt)
+
+	def reset_cooldown(self) -> None:
+		self._cooldown_timer = self.COOLDOWN
+		
 		
 
-	def environment(self, monster_list:arcade.SpriteList[Enemy]) -> None:
-		self._monster_list=monster_list
-	"""
-	def killing(self) -> list[arcade.Sprite]:
-		if self.visible:
-			return arcade.check_for_collision_with_list(
-				self._monster_list,
-			)
-		return []"""
-	"""
-	def sword_update(self, dt:float)-> list[arcade.Sprite]:
-		self.updating(dt)
-		return self.killing()"""
 	

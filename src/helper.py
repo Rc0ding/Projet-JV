@@ -3,6 +3,7 @@ from src.constants_proj import TILESIZE
 from typing import Tuple
 
 def grid_to_world(col:float, row:float, tile:float=TILESIZE)-> Tuple[float, float]:
+
 		x = col * tile + tile / 2
 		y = row * tile + tile / 2
 		return x, y

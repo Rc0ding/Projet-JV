@@ -1,5 +1,5 @@
-width: 27
-height: 35
+width: 28
+height: 26
 switches:
   - x: 3
     y: 2
@@ -104,7 +104,7 @@ gates :
   - x: 3
     y: 23
     state: closed
-  - x: 
+  - x: 3
     y: 24
     state: closed
 next_map: map9.txt # → ← ↓ ↑ 

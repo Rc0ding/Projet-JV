@@ -11,5 +11,6 @@ TEXTURES = {
     "x": CRATE_TEXTURE,
     "*": COIN_TEXTURE ,
     "£": LAVA_TEXTURE,
-    "E": PORTAL_TEXTURE
+    "E": PORTAL_TEXTURE,
+    "^": LEVER_ON_TEXTURE,
 }

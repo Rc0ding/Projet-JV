@@ -1,9 +1,7 @@
 import arcade
 from typing import Tuple
 import math
-from src.entities.base_entity import Enemy
 from src.game.player import Player
-from src.texture_manager import SWORD_TEXTURE
 class Weapon(arcade.Sprite):
 	"""
 	Generic weapon base that handles pivot math automatically.
@@ -28,6 +26,9 @@ class Weapon(arcade.Sprite):
 		self.visible = False
 		self._mouse_screen: Tuple[float, float] = (0, 0)
 		self.pivot_raw = pivot_raw
+		self.DAMAGE: int = 25           # points removed on hit
+		self.COOLDOWN: float = 0.5    # seconds between two hits
+		self._cooldown_timer: float = 0
 
 		# compute pivot-to-center vector (_chi) in world units
 		tex_w, tex_h = self.texture.width, self.texture.height
@@ -35,10 +36,12 @@ class Weapon(arcade.Sprite):
 		chi_y = (tex_h / 2 - self.pivot_raw[1]) * scale
 		self._chi = (chi_x, chi_y)
 
+
 		self._hand_offset = hand_offset
 		self._angle_offset = angle_offset
 		self.center_x = 200
 		self.center_y = 200
+		
 
 	def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> None:
 		self._mouse_screen = (x, y)
@@ -77,32 +80,9 @@ class Weapon(arcade.Sprite):
 		hand_y = player.center_y + self._hand_offset[1]
 		#print(f"Hand position: {hand_x}, {hand_y}")
 
-		dx, dy = cursor_x - self.center_x, cursor_y - self.center_y
-		print("cursor_x:", cursor_x, "cursor_y:", cursor_y)
-		print("center_x:", self.center_x, "center_y:", self.center_y)
-		print(f"dx: {dx}, dy: {dy}, angle: {math.degrees(math.atan2(dy,dx))}")
+		dx, dy = cursor_x - hand_x, cursor_y - hand_y
 		self.angle = -math.degrees(math.atan2(dy,dx)) +self._angle_offset
 
-	""" 	def update_position(self, camera:arcade.Camera2D, player: arcade.Sprite) -> None:
-	
-		Place le centre du sprite pour que la poignée reste sur la main.
-		Inversion de rotation (horaire) pour correspondre à Arcade.
-
-		cursor_x, _,_ = camera.unproject(self._mouse_screen)
-		θ = math.radians(self.angle)
-		# ------- rotation inversée (sens horaire) ------------------------
-		d=math.sin(θ)*self.hyp
-		print(f"Distance from pivot to cursor: {d}")
-		dx = d * math.cos(θ)
-		dy = d * math.sin(θ)
-		# -----------------------------------------------------------------
-		self.center_y = player.center_y + self._hand_offset[1]
-		if 640 < cursor_x:
-			print(f"LEFT, player: {player.center_x}, cursor: {cursor_x}")
-			self.center_x = player.center_x + self._hand_offset[0]
-			return
-		print(f"RIGHT, player: {player.center_x}, cursor: {cursor_x}")
-		self.center_x = player.center_x - self._hand_offset[0] """
 
 	def update_position(self, player: Player, camera: arcade.Camera2D) -> None:
 		"""
@@ -126,39 +106,15 @@ class Weapon(arcade.Sprite):
 		print(f"RIGHT, player: {player.center_x}, cursor: {cursor_x}")
 		self.center_x = player.center_x - self._hand_offset[0]+dx
 
+	
+	def ready(self) -> bool:
+		return self._cooldown_timer <= 0 and self.visible
 
-	"""
-	def update_transform(self, player: Player, camera: arcade.Camera2D) -> None:
-		
-		hand_x, hand_y  – world coords of the pivot (player's hand)
-		dir_vec         – unit vector pointing from hand to cursor
-		
+	def update_cooldown(self, dt: float) -> None:
+		self._cooldown_timer = max(0, self._cooldown_timer - dt)
 
-		# rotation
-		mouse = camera.unproject(self._mouse_screen)
-		dir = arcade.Vec2(
-			mouse.x - player.center_x, mouse.y - player.center_y
-		).normalize()
-
-		if dir.x < 0:
-			start_pos = (
-				self.center_x+22,
-				self.center_y - 24,
-			)
-		else:
-			start_pos = (
-				self.center_x - 22,
-				self.center_y - 24,
-			)
-
-			self.position = (
-				start_pos[0] + dir[0] * self.size[0] * 0.35,
-				start_pos[1] + dir[1] * self.size[1] * 0.35,
-			)
-		self.center_x =self.position[0]
-		self.center_y = self.position[1]
-	"""
-
+	def reset_cooldown(self) -> None:
+		self._cooldown_timer = self.COOLDOWN
 	# ──────────────────────────────────────────────────────────────────────
 	# 3)  Frame-level update helper
 	# ──────────────────────────────────────────────────────────────────────
