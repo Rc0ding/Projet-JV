@@ -1,0 +1,32 @@
+width: 180
+height: 27
+switches:
+  - x: 1
+    y: 1
+    state: on
+    switch_off:
+      - action: open-gate
+        x: 3
+        y: 1
+      - action: open-gate
+        x: 4
+        y: 1
+    switch_on:
+      - action: close-gate
+        x: 3
+        y: 1
+      - action: close-gate
+        x: 4
+        y: 1
+gates :
+  - x: 3
+    y: 1
+    state: closed
+  - x: 4
+    y: 1
+    state: closed
+next_map: map5.txt # → ← ↓ ↑ 
+---
+S^ ||
+==  ↓
+---

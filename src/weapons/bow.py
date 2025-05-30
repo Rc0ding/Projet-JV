@@ -14,7 +14,7 @@ Key fixes
   release – no more drifting offsets.
 """
 
-from typing import Tuple
+from typing import Tuple, Any
 import math
 import arcade
 
@@ -65,34 +65,31 @@ class Bow(Weapon):
 
 			self.angle = -math.degrees(math.atan2(vy,vx)) +42.8
 
-			# Check collisions with walls
-			
-		
-		def death(self)-> None:
-			if self.center_x<-100:
-				self.remove_from_sprite_lists()
+            # Check collisions with walls
+            
+        
+        def death(self)-> None:
+            if self.center_x<-100:
+                self.remove_from_sprite_lists()
 
-			
+            
 
 
 
-	# ------------------------------------------------------------------
-	#  Bow logic
-	# ------------------------------------------------------------------
-	def __init__(self, player: Player, camera: arcade.Camera2D) -> None:
-		super().__init__(camera=camera,
-						 texture=BOW_TEXTURE,
-						 pivot_raw=(64, 64),
-						 angle_offset=-42.8,
-						 hand_offset=(20, -14),
-						 scale=0.35)
-		self._player = player
-		#self._wall_list = arcade.SpriteList()
-		self._cooldown = 0.0
-		self.arrows: arcade.SpriteList[Bow.Arrow] = arcade.SpriteList(use_spatial_hash=True)
-		self.DAMAGE: int = 25           # points removed on hit
-		self.COOLDOWN: float = 0.5    # seconds between two hits
-		self._cooldown_timer: float = 0
+    # ------------------------------------------------------------------
+    #  Bow logic
+    # ------------------------------------------------------------------
+    def __init__(self, player: Player, camera: arcade.Camera2D) -> None:
+        super().__init__(camera=camera,
+                         texture=BOW_TEXTURE,
+                         pivot_raw=(64, 64),
+                         angle_offset=-42.8,
+                         hand_offset=(20, -14),
+                         scale=0.35)
+        self._player = player
+        #self._wall_list = arcade.SpriteList()
+        self._cooldown = 0.0
+        self.arrows: arcade.SpriteList[Bow.Arrow] = arcade.SpriteList(use_spatial_hash=True)
 
 	# .................................................................
 	#  Mouse events
@@ -135,14 +132,14 @@ class Bow(Weapon):
 		if dir_vec.length() == 0:
 			dir_vec = arcade.Vec2(1, 0)
 
-		start_pos = (self.center_x, self.center_y)
-		arrow = Bow.Arrow(start_pos, dir_vec, self.angle)
-		self.arrows.append(arrow)
-	
-	"""
-	def setup_collision_lists(self, wall_list: arcade.SpriteList[arcade.SpriteList]):
-		Set up collision lists for the arrow
-		self._wall_list = wall_list"""
+        start_pos = (self.center_x, self.center_y)
+        arrow = Bow.Arrow(start_pos, dir_vec, self.angle)
+        self.arrows.append(arrow)
+    
+    """
+    def setup_collision_lists(self, wall_list: arcade.SpriteList[arcade.SpriteList]):
+        Set up collision lists for the arrow
+        self._wall_list = wall_list"""
 
 
 	def ready(self) -> bool:

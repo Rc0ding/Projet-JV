@@ -1,0 +1,93 @@
+width: 22
+height: 27
+switches:
+  - x: 16
+    y: 5
+    state: on
+    switch_off:
+      - action: open-gate
+        x: 5
+        y: 2
+      - action: open-gate
+        x: 6
+        y: 2
+      - action: open-gate
+        x: 9
+        y: 9
+      - action: open-gate
+        x: 14
+        y: 23
+      - action: close-gate
+        x: 15
+        y: 19
+      - action: close-gate
+        x: 15
+        y: 18
+    switch_on:
+      - action: close-gate
+        x: 5
+        y: 2
+      - action: close-gate
+        x: 6
+        y: 2
+      - action: close-gate
+        x: 9
+        y: 9
+      - action: close-gate
+        x: 14
+        y: 23
+      - action: open-gate
+        x: 15
+        y: 19
+      - action: open-gate
+        x: 15
+        y: 18
+gates :
+  - x: 5
+    y: 2
+    state: closed
+  - x: 6
+    y: 2
+    state: closed
+  - x: 9
+    y: 9
+    state: closed 
+  - x: 15
+    y: 19
+    state: open
+  - x: 15
+    y: 18
+    state: open 
+  - x: 14
+    y: 23
+    state: closed
+next_map: map7.txt # → ← ↓ ↑ 
+---
+======================
+======================
+=                  ===
+=             |o    ==
+=              =  E  =
+=              ==£=££=
+=  ↑           =======
+=  ↑           | ****=
+=  ↑  ←====→   | ****=
+=  =           ==**x£=
+== =      =  =========
+== =      ==        ==
+== ↓£££    ==    ↑  ==
+==  £=£          =  ==
+==  £=£          =  ==
+==  ==££=        ↓  ==
+==   ==££  £=x    S ==
+==== ===£|££==== =====
+==== ===£ £===== =====
+==== ===£ £===   =*===
+==== ===£ £===w   w===
+====      ==    ^  ===
+====T           =  ===
+====x    o      =  ===
+=====||££=£££££££££===
+=====££===============
+======================
+---
