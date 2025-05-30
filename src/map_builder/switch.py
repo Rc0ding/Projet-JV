@@ -52,9 +52,11 @@ The code purposefully avoids any tight coupling to the rest of your codebase –
 it requires only `arcade` and a reference to the gate list so it can find the
 right Gate to operate on.
 """
-
-from typing import List,Tuple
+import arcade
+from typing import List,Tuple, Union, Any, Dict
 from src.texture_manager import *
+
+
 # ──────────────────────────────────────────────────────────────────────
 #  Gate sprite – a block that can disappear / re‑appear
 # ──────────────────────────────────────────────────────────────────────
@@ -72,7 +74,7 @@ class Gate(arcade.Sprite):
         position: Tuple[float, float],
         *,
         state: str = "closed",     # "open" or "closed"
-        scale: float = 1.0,
+        scale: float = 0.5,
         texture: str = GATE_TEXTURE,  # default texture name
     ) -> None:
         super().__init__(texture, scale=scale, center_x=position[0], center_y=position[1])
@@ -105,101 +107,69 @@ class Gate(arcade.Sprite):
 #  Switch sprite – animated lever that executes actions
 # ──────────────────────────────────────────────────────────────────────
 
-class Switch(arcade.Sprite):
-    """A lever the player can hit to trigger actions.
 
-    The constructor receives the raw *switch_meta* extracted from the YAML
-    header (dictionary) and the list of *gate sprites* already created by the
-    level‑builder so it can find and operate the target gates.
+SpriteListOrList = Union[List["Gate"], arcade.SpriteList[Gate]]  # helper alias
+
+
+class Switch(arcade.Sprite):
+    """
+    Lever / switch sprite driven only by the raw YAML‐dict *switch_meta*.
+
+    * ``switch_meta`` is the dictionary taken directly from the map header:
+      ``{ "x": 3, "y": 8, "state": "on", "switch_on": [...], ... }``.
+    * ``gate_list`` is the sprite list containing every Gate that may be
+      targeted by this switch.
     """
 
-    TEXTURE_OFF = LEVEL_OFF_TEXTURE  # relative to this file
-    TEXTURE_ON = LEVEL_ON_TEXTURE  # prettier than file constant
+    TEXTURE_OFF = LEVER_OFF_TEXTURE
+    TEXTURE_ON  = LEVER_ON_TEXTURE
 
+    # ------------------------------------------------------------------
+    #  Construction
+    # ------------------------------------------------------------------
     def __init__(
         self,
         position: Tuple[float, float],
-        switch_meta: Map.Metadata.SwitchPosition,
-        gate_list: List[Gate] | arcade.SpriteList[Gate],
+        switch_meta: Dict[str, Any]={},
+        gate_list: SpriteListOrList=arcade.SpriteList(),
         *,
-        scale: float = 1.0,
+        scale: float = 0.5,
     ) -> None:
-        # ––– base sprite ------------------------------------------------
-        super().__init__(self.TEXTURE_OFF, scale=scale, center_x=position[0], center_y=position[1])
+
+        # --- base sprite ------------------------------------------------
+        super().__init__(filename=self.TEXTURE_OFF,
+                         scale=scale,
+                         center_x=position[0],
+                         center_y=position[1])
+        self.append_texture(arcade.load_texture(self.TEXTURE_OFF))
         self.append_texture(arcade.load_texture(self.TEXTURE_ON))  # index 1
 
-        # ––– runtime state --------------------------------------------
-        self._gate_list = gate_list
-        self.is_on: bool = switch_meta.state == switch_meta.State.on
+        # --- runtime state ----------------------------------------------
+        self._meta: Dict[str, Any]   = switch_meta        # keep the dict
+        self._gate_list              = gate_list
+        self.meta_x: int = switch_meta.get("x", 0)
+        self.meta_y: int = switch_meta.get("y", 0)
+        self.is_on: bool = switch_meta.get("state", "off") == "on"
         self.set_texture(1 if self.is_on else 0)
-        self._disabled: bool = getattr(switch_meta, "disabled", False)
-
-        self._actions_on:  list[Map.Metadata.SwitchPosition.Action] = (
-            switch_meta.switch_on or []
-        )
-        self._actions_off: list[Map.Metadata.SwitchPosition.Action] = (
-            switch_meta.switch_off or []
-        )
-
-        # ––– actions ----------------------------------------------------
-        self.lever_on  = switch_meta.switch_on  or []   # list[Action]
-        self.lever_off = switch_meta.switch_off or []   # list[Action]
-
 
     # ------------------------------------------------------------------
-    #  Public interface -------------------------------------------------
+    #  Public interface
     # ------------------------------------------------------------------
-       # ──────────────────────────────────────────────────────────────
-    # public: called by the game when the player activates the lever
-    # ──────────────────────────────────────────────────────────────
     def trigger(self) -> None:
-        """Flip the lever and run its actions (if not disabled)."""
+        """Flip the switch and execute its actions (unless disabled)."""
 
-        if self._disabled:
-            return
-
-        # 1) Toggle logical + visual state
+        # 1) toggle logical + visual state
         self.is_on = not self.is_on
         self.set_texture(1 if self.is_on else 0)
 
-        # 2) Pick the correct action list and execute each entry
-        actions = self._actions_on if self.is_on else self._actions_off
-        for act in actions:
-            self._execute_action(act)
-
-    # ------------------------------------------------------------------
-    #  Internal helpers -------------------------------------------------
-    # ------------------------------------------------------------------
-
-    def _execute_action(self, act: Map.Metadata.SwitchPosition.Action) -> None:
-        """Run a single Action object on this switch."""
-        kind = act.action   # <— enum value of type Kind
-
-        if kind in (
-            Map.Metadata.SwitchPosition.Action.Kind.open_gate,
-            Map.Metadata.SwitchPosition.Action.Kind.close_gate,
-        ):
-            gate = self._find_gate(act)
-            if gate is None:
-                raise RuntimeError(f"Gate not found for action {act!r}")
-
-            gate.set_state(kind == Map.Metadata.SwitchPosition.Action.Kind.close_gate)
-
-        elif kind == Map.Metadata.SwitchPosition.Action.Kind.disable:
-            self._disabled = True
-
-        else:
-            raise ValueError(f"Unknown switch action: {kind}")
-
-    def _find_gate(
-        self, act: Map.Metadata.SwitchPosition.Action
-    ) -> Gate | None:
-        """Locate a gate by the *grid* coordinates stored in the Action."""
-        gx, gy = act.x, act.y
+        # 2) execute appropriate action list
         for gate in self._gate_list:
-            if (
-                getattr(gate, "meta_x", None) == gx
-                and getattr(gate, "meta_y", None) == gy
-            ):
-                return gate
-        return None
+            print("gate:", gate, "is_open:", gate.is_open,"at", gate.center_x, gate.center_y)
+            gate.toggle()
+
+    def debug_switch(self, position: Tuple[float, float], state: bool, gates: arcade.SpriteList[Gate]) -> None:
+        """Debugging helper to visualize switch state."""
+        self.center_x, self.center_y = position
+        self.is_on = state
+        self.set_texture(1 if self.is_on else 0)
+        self._gate_list = gates

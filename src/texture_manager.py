@@ -32,8 +32,8 @@ HALF_GROUND_TEXTURE = "assets/texturepack/halfground.png"
 
 LAVA_TEXTURE = "assets/texturepack/lava.png"
 
-LEVEL_OFF_TEXTURE = "assets/texturepack/lever_off.png"
+LEVER_OFF_TEXTURE = "assets/texturepack/lever_off.png"
 
-LEVEL_ON_TEXTURE = "assets/texturepack/lever_on.png"
+LEVER_ON_TEXTURE = "assets/texturepack/lever_on.png"
 
 PORTAL_TEXTURE = "assets/texturepack/portal.png"

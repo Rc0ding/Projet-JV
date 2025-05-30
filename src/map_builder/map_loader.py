@@ -51,5 +51,6 @@ class MapLoader:
 
     # private -------------------------------------------------
     def _parse_header(self, header: str) -> Dict[str, Any]:
+        print(yaml.safe_load(header))
         """Return the YAML header as an ordinary dict."""
         return yaml.safe_load(header) or {}

@@ -45,16 +45,16 @@ def build_platforms(
     meta_with_rows = rows
     # Extract the width value from meta.
     width = meta["width"]
-    print("Building platforms from rows:", meta_with_rows)
-    print("Unique chars in rows:", sorted({c for line in rows for c in line}))
+    #print("Building platforms from rows:", meta_with_rows)
+    #print("Unique chars in rows:", sorted({c for line in rows for c in line}))
 
     # Label connected blocks of eligible characters.
     blocks = _label_blocks(meta_with_rows, width)
-    print(f"Blocks found: {blocks}")
+    #print(f"Blocks found: {blocks}")
     # Extract arrow series for horizontal and vertical directions.
     series_h, series_v = _collect_arrow_series(meta_with_rows, width)
-    print(f"Horizontal arrow series: {series_h}")
-    print(f"Vertical arrow series: {series_v}")
+    #print(f"Horizontal arrow series: {series_h}")
+    #print(f"Vertical arrow series: {series_v}")
     # Initialize list to hold created platforms.
     sprites: List[Platform] = []
     wx: float
@@ -101,7 +101,7 @@ def build_platforms(
                 a = g_left+( col - block_min)
                 b = g_right -( block_max - col)
                 b_left, b_right = grid_row(a, b)
-                print(f"Processing cell ({col}, {row}) with bounds ({b_left}, {b_right}), a={a}, b={b}")
+                #print(f"Processing cell ({col}, {row}) with bounds ({b_left}, {b_right}), a={a}, b={b}")
                 wx, wy = grid_to_world(col, length - row - 1)
                 sprites.append(
                     Platform(

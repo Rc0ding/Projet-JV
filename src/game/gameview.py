@@ -7,7 +7,7 @@ from src.entities.base_entity import Enemy     # path of your new file
 from src.map_builder.platforms import Platform
 from src.game.player import Player
 from src.texture_manager import *
-#from src.map_builder.switch import Gate, Switch
+from src.map_builder.switch import Gate, Switch
 class GameView(arcade.View):
 	"""Main in-game view."""
 
@@ -19,20 +19,21 @@ class GameView(arcade.View):
 		self.background = get_texture_path(BACKGROUND_TEXTURE)
 		self.background_color = arcade.color.BLACK
 
-		self.map_name: str = "maps/map2.txt"
+		self.map_name: str = "maps/map5.txt"
 		# Dummy defaults for mypy
 		self.wall_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
 		self.coin_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
 		self.monster_list: arcade.SpriteList[Enemy] = arcade.SpriteList()
 		self.platforms: arcade.SpriteList[Platform] = arcade.SpriteList(use_spatial_hash=True)
-
+		self.switches: arcade.SpriteList[Switch] = arcade.SpriteList(use_spatial_hash=True)
+		self.switch: Switch
 		self.death_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
 		self.exit_list: arcade.SpriteList[arcade.Sprite] = arcade.SpriteList()
 		self.player_sprite_list: arcade.SpriteList[Player] = arcade.SpriteList()
 		self.player_sprite: Player
 		self.initial_x: float = 0.0
 		self.initial_y: float = 0.0
-		#self.gates: arcade.SpriteList[Gate] = arcade.SpriteList()
+		self.gates: arcade.SpriteList[Gate] = arcade.SpriteList()
 		#self.switches: arcade.SpriteList[Switch] = arcade.SpriteList()
 	
 		self.physics_engine: Optional[arcade.PhysicsEnginePlatformer] = None
@@ -55,14 +56,17 @@ class GameView(arcade.View):
 		new_map = self.map
 
 		self.wall_list    = new_map["walls"]
-		self.coin_list    = new_map["coins"]
+
 		self.monster_list = new_map["monsters"]
 		self.death_list   = new_map["death"]
 		self.exit_list    = new_map["exit"]
 		self.player_sprite_list = new_map["player"]
 		self.platforms = new_map["platforms"]
-		#self.gates = new_map["gates"]
-		#self.switches = new_map["switches"]
+		self.gates = new_map["gates"]
+		self.switches = new_map["switches"]
+		self.coin_list   = new_map["coins"]
+		print("TEST 4",len(self.switches))
+		print("TEST 5",len(self.gates))
 		# Create some test platforms
 		
 		self.wall_list.extend(self.platforms)
@@ -95,8 +99,7 @@ class GameView(arcade.View):
 			case arcade.key.LEFT:
 				self.player_sprite.change_x = -self.PLAYER_MOVEMENT_SPEED
 			case arcade.key.UP:
-				if self.player_sprite.change_y == 0:
-					self.player_sprite.change_y = +20
+				self.player_sprite.change_y = +20
 			case arcade.key.SPACE:
 				self.player_sprite.change_x = 0
 				self.player_sprite.change_y = 0
@@ -130,6 +133,7 @@ class GameView(arcade.View):
 			case _:
 				pass
 	
+
 	def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> None:
 		if button == arcade.MOUSE_BUTTON_LEFT:
 			self.sword.visible = True
@@ -142,10 +146,12 @@ class GameView(arcade.View):
 		self.sword.on_mouse_motion(x, y, dx, dy)
 
 	def on_update(self, delta_time: float) -> None:
-	
 		# Physics step
 		if self.physics_engine is not None:
 			self.physics_engine.update()
+			self.jump=self.physics_engine.can_jump()
+		
+
 		# Update moving platforms with delta_time 
 		# Monster AI and collision
 		for monster in self.monster_list:
@@ -175,7 +181,11 @@ class GameView(arcade.View):
 			coin.remove_from_sprite_lists()
 		self.player_sprite.update_invincibility(delta_time)
 
-
+		for gate in self.gates:
+			if gate.is_open and gate in self.wall_list:
+				self.wall_list.remove(gate)
+			if gate.is_open is False and  not(gate in self.wall_list):
+				self.wall_list.append(gate)
 		# Death or exit → reset or next level
 		if arcade.check_for_collision_with_list(self.player_sprite, self.death_list) or self.player_sprite.current_health <= 0 or self.player_sprite.center_y < -300:
 			self.player_sprite.change_x = 0
@@ -183,11 +193,11 @@ class GameView(arcade.View):
 			self.setup(self.map_name)
 			return
 		if arcade.check_for_collision_with_list(self.player_sprite, self.exit_list):
-			self.setup("maps/map2.txt")
+			self.setup("maps/map6.txt")
 			return
 		self.player_sprite.update_health_bar()
 		# Camera follows player horizontally
-		self.camera.position = [self.player_sprite.center_x, 360]  # type: ignore
+		self.camera.position = arcade.Vec2(self.player_sprite.center_x, self.player_sprite.center_y-self.player_sprite.change_y)
 
 
 
@@ -198,6 +208,8 @@ class GameView(arcade.View):
             	arcade.LBWH(0, 0, 1280, 720),
         	)
 		with self.camera.activate():
+			self.gates.draw()
+			self.switches.draw()
 			arcade.draw_sprite(self.player_sprite)
 			self.wall_list.draw()
 			self.coin_list.draw()

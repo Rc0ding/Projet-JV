@@ -11,6 +11,7 @@ from src.map_builder.platform_build import build_platforms
 from src.map_builder.platforms import Platform
 from src.game.player import Player
 from src.texture_manager import *
+from src.map_builder.switch import Gate, Switch
         # ← add this
 
 #from src.map_builder.switch import Gate, Switch 
@@ -26,9 +27,9 @@ class LevelData(TypedDict):
     player:    arcade.SpriteList[Player]
     monsters:  arcade.SpriteList[Enemy]
     platforms: arcade.SpriteList[Platform]
-    """
     gates:    arcade.SpriteList[Gate]
-    switches: arcade.SpriteList[Switch]"""
+    switches: arcade.SpriteList[Switch]
+
 
 class LevelBuilder:
 
@@ -158,35 +159,48 @@ class LevelBuilder:
 
 		# meta.gates is *really* a list[dict]; tell the type-checker explicitly
 		#gates_raw: List[Dict[str, Any]] = cast(List[Dict[str, Any]], meta.gates or [])
-		"""
-		width  = meta["width"]
-		height = meta["height"]
+		
 
 		# gates ------------------------------------------------------------
+				# snippet inside build_level() ---------------------------------------
+
+		gate_list: arcade.SpriteList[Gate] = arcade.SpriteList()
+		gate_by_coord: dict[tuple[int, int], Gate] = {}
+
 		for g in meta.get("gates", []):
-			gx, gy   = g["x"], g["y"]
-			state    = g.get("state", "closed")
+			gx, gy = g["x"], g["y"]
+			wx, wy = helper.grid_to_world(gx, gy+1)
 
-			wx, wy   = helper.grid_to_world(gx, gy)
-			gate     = Gate(position=(wx, wy), state=state)
-			gate.meta_x, gate.meta_y = gx, gy        # keep for look-up
+			gate = Gate(position=(wx, wy), state=g.get("state", "closed"))
+              # keep grid coords
 			gate_list.append(gate)
+			gate_by_coord[(gx, gy)] = gate                 # quick lookup
 
-		# switches ---------------------------------------------------------
+
+		switch_list: arcade.SpriteList[Switch] = arcade.SpriteList()
+
 		for s in meta.get("switches", []):
-			sx, sy   = s["x"], s["y"]
-			wx, wy   = helper.grid_to_world(sx, sy)
+			sx, sy = s["x"], s["y"]
+			wx, wy = helper.grid_to_world(sx, sy+1)
+			targets: list[Gate] = []
+			actions = (s.get("switch_on", [])) + (s.get("switch_off", []))  
+
+			for act in actions:
+				print("TEST1", act)
+				g = gate_by_coord.get((act["x"], act["y"]))
+				if g and g not in targets:
+					targets.append(g)
+					print("TEST2", g, "added to switch targets")
 
 			switch = Switch(position=(wx, wy),
-					switch_meta=s,        # ← plain dict
-					gate_list=gate_list)
+					switch_meta=s,
+					gate_list=targets)
 			switch_list.append(switch)
-		"""
-
 
 
 		if len(player_sprite_list) == 0:
 			raise ValueError("No player sprite found in the map (missing 'S' symbol)!")
+
 
 		return {
 			"walls": wall_list,
@@ -196,7 +210,8 @@ class LevelBuilder:
 			"player": player_sprite_list,
 			"exit": exit_list,
 			"platforms": platforms,
-			#"gates": gate_list,
-			#"switches": switch_list,
+			"gates": gate_list,
+			"switches": switch_list,
 		}
+
 

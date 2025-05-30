@@ -186,14 +186,13 @@ class Sword(Weapon):
 
 	def environment(self, monster_list:arcade.SpriteList[Enemy]) -> None:
 		self._monster_list=monster_list
-	
+	"""
 	def killing(self) -> list[arcade.Sprite]:
 		if self.visible:
 			return arcade.check_for_collision_with_list(
-				self._Sprite,
 				self._monster_list,
 			)
-		return []
+		return []"""
 	"""
 	def sword_update(self, dt:float)-> list[arcade.Sprite]:
 		self.updating(dt)
